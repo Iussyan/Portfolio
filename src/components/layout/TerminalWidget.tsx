@@ -1,0 +1,388 @@
+"use client";
+
+import { useState, useEffect, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Terminal as TerminalIcon, X, ChevronRight, Command, Maximize2, Minimize2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { tacticalAudio } from "@/lib/sounds";
+import { TargetScannerGame } from "../ui/TargetScannerGame";
+
+type LogEntry = {
+  type: "command" | "output" | "error" | "info";
+  content: string | React.ReactNode;
+  timestamp: string;
+};
+
+const INITIAL_BOOT_LOGS = [
+  "INITIALIZING_CORE_SYSTEMS...",
+  "CONNECTING_TO_REMOTE_NODE: 0x8F4",
+  "DECRYPTING_BIO_METRIC_DATA...",
+  "ACCESS_GRANTED: OPERATOR_01",
+  "WELCOME TO IUSSYAN_TERMINAL_V1.0.4",
+  "TYPE 'HELP' FOR LIST OF AVAILABLE COMMANDS."
+];
+
+export function TerminalWidget() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [input, setInput] = useState("");
+  const [history, setHistory] = useState<string[]>([]);
+  const [historyIdx, setHistoryIdx] = useState(-1);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [mounted, setMounted] = useState(false);
+  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+  const router = useRouter();
+  const hasBooted = useRef(false);
+
+  const addLog = useCallback((type: LogEntry["type"], content: string | React.ReactNode) => {
+    const timestamp = typeof window !== "undefined"
+      ? new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      : "";
+    setLogs(prev => [...prev, { type, content, timestamp }].slice(-100));
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
+    setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+
+    const savedState = localStorage.getItem("terminal-state");
+    if (savedState) {
+      try {
+        const { open, fullscreen } = JSON.parse(savedState);
+        setIsOpen(open);
+        setIsFullscreen(fullscreen);
+      } catch (e) {
+        console.error("Failed to parse terminal state", e);
+      }
+    }
+
+    const handleResize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Persist state changes
+  useEffect(() => {
+    if (!mounted) return;
+    localStorage.setItem("terminal-state", JSON.stringify({ open: isOpen, fullscreen: isFullscreen }));
+  }, [isOpen, isFullscreen, mounted]);
+
+  // Initialize boot only once
+  useEffect(() => {
+    if (hasBooted.current) return;
+    hasBooted.current = true;
+
+    const boot = async () => {
+      for (const msg of INITIAL_BOOT_LOGS) {
+        addLog("info", msg);
+        tacticalAudio?.blip();
+        await new Promise(r => setTimeout(r, 150));
+      }
+    };
+    boot();
+  }, [addLog]);
+
+  // Handle global toggle event (from Navbar or elsewhere)
+  useEffect(() => {
+    const handleToggle = () => {
+      setIsOpen(prev => {
+        if (!prev) tacticalAudio?.hum();
+        else tacticalAudio?.click();
+        return !prev;
+      });
+    };
+    window.addEventListener("toggle-terminal", handleToggle);
+    return () => window.removeEventListener("toggle-terminal", handleToggle);
+  }, []);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+    if (isOpen) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [logs, isOpen]);
+
+  const handleCommand = useCallback((cmd: string) => {
+    const cleanCmd = cmd.trim().toLowerCase();
+    if (!cleanCmd) return;
+
+    setHistory(prev => [cmd, ...prev].slice(0, 50));
+    setHistoryIdx(-1);
+    addLog("command", `> ${cmd}`);
+
+    switch (cleanCmd) {
+      case "help":
+        addLog("info", (
+          <div className="grid grid-cols-1 gap-1">
+            <span className="text-primary font-bold">AVAILABLE_COMMANDS:</span>
+            <span className="text-secondary">- WHOAMI: OPERATOR IDENTITY</span>
+            <span className="text-secondary">- LS: DIRECTORY LISTING</span>
+            <span className="text-secondary">- EXPEDITIONS: ACHIEVEMENTS & CERTS</span>
+            <span className="text-secondary">- TERMINAL: REDIRECT TO TERMINAL</span>
+            <span className="text-secondary">- CD [DIR]: NAVIGATION (OPERATOR, MISSIONS, EXPEDITIONS, COMMS)</span>
+            <span className="text-secondary">- SYSINFO: SYSTEM TELEMETRY</span>
+            <span className="text-secondary">- FULLSCREEN: TOGGLE DISPLAY MODE</span>
+            <span className="text-secondary">- CLEAR: PURGE BUFFER</span>
+            <span className="text-secondary">- CLOSE: MINIMIZE MODULE</span>
+          </div>
+        ));
+        break;
+      case "fullscreen":
+        setIsFullscreen(prev => !prev);
+        addLog("info", "DISPLAY_MODE_UPDATED.");
+        break;
+      case "clear":
+        setLogs([]);
+        break;
+      case "whoami":
+        addLog("output", "IDENTITY: SILVANO, JULIUS JR. K. // OPERATOR_01");
+        addLog("output", "CODENAME: IUSSYAN // IUSSYAN.TECH");
+        addLog("output", "SECTOR: ASIA_PH // FULL_STACK_DEVELOPER");
+        break;
+      case "ls":
+        addLog("output", "DIR: /ROOT/OPERATOR\nDIR: /ROOT/MISSIONS\nDIR: /ROOT/EXPEDITIONS\nDIR: /ROOT/COMMS");
+        break;
+      case "sysinfo":
+        addLog("output", "OS: IUSSYAN_HUD_V3\nUPTIME: 99.98%\nLATENCY: 12MS\nENCRYPTION: ACTIVE\nSIGNAL: EXCELLENT");
+        break;
+      case "close":
+      case "exit":
+        setIsOpen(false);
+        break;
+      case "terminal":
+        router.push("/");
+        addLog("info", "RE-ROUTING_TO: Terminal");
+        tacticalAudio?.comms();
+        break;
+      case "cd operator":
+        router.push("/about");
+        addLog("info", "RE-ROUTING_TO: Operator");
+        tacticalAudio?.comms();
+        break;
+      case "cd missions":
+        router.push("/projects");
+        addLog("info", "RE-ROUTING_TO: Missions");
+        tacticalAudio?.comms();
+        break;
+      case "cd comms":
+        router.push("/contact");
+        addLog("info", "RE-ROUTING_TO: Comms");
+        tacticalAudio?.comms();
+        break;
+      case "expeditions":
+      case "cd expeditions":
+        router.push("/expeditions");
+        addLog("info", "RE-ROUTING_TO: Expeditions");
+        tacticalAudio?.comms();
+        break;
+      default:
+        addLog("error", `COMMAND_NOT_RECOGNIZED: '${cmd}'. TYPE 'HELP'.`);
+        tacticalAudio?.error();
+    }
+  }, [addLog, router]);
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleCommand(input);
+      setInput("");
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (historyIdx < history.length - 1) {
+        const nextIdx = historyIdx + 1;
+        setHistoryIdx(nextIdx);
+        setInput(history[nextIdx]);
+      }
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (historyIdx > 0) {
+        const nextIdx = historyIdx - 1;
+        setHistoryIdx(nextIdx);
+        setInput(history[nextIdx]);
+      } else {
+        setHistoryIdx(-1);
+        setInput("");
+      }
+    }
+  };
+
+  const isMobile = windowSize.width < 640;
+  const bubbleSize = isMobile ? 48 : 56;
+  const edgeOffset = isMobile ? 12 : 20;
+
+  if (!mounted) return null;
+
+  // Calculate concrete pixel dimensions for motion to tween
+  const getTerminalWidth = () => {
+    if (isFullscreen) return windowSize.width;
+    if (isMobile) return windowSize.width - 16;
+    if (windowSize.width < 1024) return Math.min(windowSize.width - 32, 600);
+    return 600;
+  };
+
+  const getTerminalHeight = () => {
+    if (isFullscreen) return windowSize.height;
+    if (isMobile) return Math.min(windowSize.height * 0.7, windowSize.height - 80);
+    if (windowSize.width < 1024) return Math.min(windowSize.height - 80, 500);
+    return 500;
+  };
+
+  return (
+    <>
+      {/* Floating bubble (visible when collapsed) */}
+      <AnimatePresence>
+        {!isOpen && (
+          <motion.button
+            key="terminal-bubble"
+            id="terminal-bubble"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            onClick={() => {
+              setIsOpen(true);
+              tacticalAudio?.hum();
+            }}
+            className="fixed font-mono cursor-pointer border border-primary/40 bg-surface-medium hover:bg-surface-high transition-colors flex items-center justify-center text-primary group"
+            style={{
+              zIndex: 201,
+              bottom: edgeOffset,
+              right: edgeOffset,
+              width: bubbleSize,
+              height: bubbleSize,
+            }}
+            aria-label="Open terminal"
+            data-terminal-widget="collapsed"
+          >
+            <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors" />
+            <TerminalIcon size={isMobile ? 20 : 24} className="relative z-10 hover:flicker" />
+            <div className="absolute top-0 right-0 w-2 h-2 bg-primary animate-pulse" />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Expanded terminal panel */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            key="terminal-panel"
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              width: getTerminalWidth(),
+              height: getTerminalHeight(),
+            }}
+            exit={{ opacity: 0, scale: 0.85 }}
+            transition={{
+              type: "spring",
+              stiffness: 400,
+              damping: 40,
+              mass: 1,
+              opacity: { duration: 0.15 },
+            }}
+            className={cn(
+              "fixed flex flex-col font-mono selection:bg-primary selection:text-surface border shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden bg-surface",
+              isFullscreen ? "border-primary/10" : "border-primary/20 scanlines"
+            )}
+            style={{
+              zIndex: isFullscreen ? 9998 : 201,
+              transformOrigin: "bottom right",
+              position: "fixed",
+              bottom: isFullscreen ? 0 : edgeOffset,
+              right: isFullscreen ? 0 : edgeOffset,
+              left: isFullscreen ? 0 : "auto",
+              top: isFullscreen ? 0 : "auto",
+            }}
+            data-terminal-widget="expanded"
+          >
+            {/* Header */}
+            <div className="border-b border-primary/20 p-3 flex justify-between items-center text-[10px] font-bold tracking-widest text-primary/60 bg-surface-medium shrink-0">
+              <div className="flex items-center gap-3">
+                <Command size={14} className="text-secondary" />
+                <span className="hidden sm:inline">IUSSYAN_CONSOLE // v1.0.4</span>
+                <span className="sm:hidden text-primary animate-pulse">LIVE_SESSION</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => {
+                    setIsFullscreen(!isFullscreen);
+                    tacticalAudio?.click();
+                  }}
+                  className="p-1.5 hover:bg-surface-high text-on-surface-muted hover:text-primary transition-colors"
+                  title="TOGGLE_FULLSCREEN"
+                >
+                  {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                </button>
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    setIsFullscreen(false);
+                    tacticalAudio?.click();
+                  }}
+                  className="p-1.5 hover:bg-surface-high text-on-surface-muted hover:text-tertiary transition-colors"
+                  title="CLOSE"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div
+              ref={scrollRef}
+              onClick={() => inputRef.current?.focus()}
+              className="flex-1 p-4 overflow-y-auto scrollbar-tactical flex flex-col gap-1.5 bg-surface/95 min-h-0"
+            >
+              {logs.map((log, i) => (
+                <div key={i} className={cn(
+                  "text-xs sm:text-sm leading-relaxed flex gap-3",
+                  log.type === "command" ? "text-on-surface font-bold" :
+                    log.type === "error" ? "text-tertiary" :
+                      log.type === "info" ? "text-primary/60" :
+                        "text-primary"
+                )}>
+                  <span className="opacity-20 shrink-0 select-none hidden sm:block">[{log.timestamp}]</span>
+                  <div className="flex-1 whitespace-pre-wrap">{log.content}</div>
+                </div>
+              ))}
+
+              <div className="mt-2 flex items-center gap-2 text-secondary">
+                <ChevronRight size={16} className="animate-pulse shrink-0" />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  className="flex-1 bg-transparent border-none outline-none text-on-surface font-mono text-sm caret-primary focus:ring-0 p-0"
+                  autoFocus
+                  spellCheck={false}
+                  autoComplete="off"
+                  value={input}
+                  onChange={(e) => {
+                    setInput(e.target.value);
+                    tacticalAudio?.type();
+                  }}
+                  onKeyDown={onKeyDown}
+                />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-primary/10 p-2 bg-surface-low text-[9px] font-bold text-on-surface-muted/40 uppercase tracking-tighter flex justify-between items-center px-4 shrink-0">
+              <span>STATUS: STABLE</span>
+              <div className="flex items-center gap-4">
+                <span>LN: {logs.length}</span>
+                <span className="text-secondary">UPLINK_ENCRYPTED</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
