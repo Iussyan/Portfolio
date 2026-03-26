@@ -161,7 +161,7 @@ export default function Projects() {
             [NOTICE] All project documentation is verified and stable. Confidential details are withheld pending professional engagement.
           </p>
           <Link href="/contact" className="btn-tactical btn-tactical-secondary text-xs">
-            DOWNLOAD RESUME
+            REQUEST ACCESS {">>"}
           </Link>
         </section>
 

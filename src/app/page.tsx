@@ -11,9 +11,9 @@ import { tacticalAudio } from "@/lib/sounds";
 import { TargetScannerGame } from "@/components/ui/TargetScannerGame";
 
 const RecentActivity = [
-  { id: "01", date: "2024-05-12", title: "SEEGLA // FRONTEND ARCHITECTURE", status: "COMPLETED" },
+  { id: "01", date: "2024-05-12", title: "SEEGLA // SOFTWARE ENGINEER", status: "ACTIVE" },
   { id: "02", date: "2024-05-08", title: "LUNA // HEALTH-TECH SYNC", status: "ACTIVE" },
-  { id: "03", date: "2024-04-30", title: "DIGITAL LAB // INDIE GAME DEV", status: "STABLE" },
+  { id: "03", date: "2024-04-30", title: "DIGITAL LAB // INDIE GAME DEV", status: "ACTIVE" },
 ];
 
 const Skills = [
@@ -29,7 +29,7 @@ const TITLES = [
   "Full-Stack Developer",
   "Next.js Specialist",
   "Lead Developer @ LUNA",
-  "Team SEEGLA Collaborator"
+  "Team SEEGLA Software Engineer"
 ];
 
 export default function Home() {

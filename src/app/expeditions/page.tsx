@@ -198,25 +198,38 @@ export default function Expeditions() {
       title: evt.name,
       subtitle: `TYPE: ${evt.type} // ${evt.date}`,
       content: (
-        <div className="flex flex-col gap-6 font-mono text-base uppercase">
-          <PhotoCarousel images={evt.images} />
-          <div className="border-l-2 border-secondary pl-4 py-2 bg-secondary/5">
-            <span className="text-secondary font-extrabold text-sm tracking-widest">LOCATION: {evt.location}</span>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-mono text-base uppercase">
+          {/* Left Column: Intelligence Asset */}
           <div className="flex flex-col gap-4">
-            <h4 className="text-primary font-bold text-xs tracking-widest uppercase">MISSION_DEBRIEF</h4>
-            <p className="text-base font-bold text-on-surface leading-snug normal-case font-sans">
-              {evt.desc}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-surface-high p-5 border border-outline/10">
-              <span className="text-primary/60 text-[11px] font-bold block mb-1 uppercase tracking-widest">PARTICIPATION</span>
-              <span className="text-xl font-bold tracking-tight text-primary">ACTIVE</span>
+            <PhotoCarousel images={evt.images} />
+            <div className="border-l-2 border-secondary pl-4 py-3 bg-secondary/5 mt-auto">
+              <span className="text-secondary font-extrabold text-[11px] tracking-widest block uppercase mb-1">COORDINATES</span>
+              <span className="text-on-surface font-black text-sm">{evt.location}</span>
             </div>
-            <div className="bg-surface-high p-5 border border-outline/10">
-              <span className="text-primary/60 text-[11px] font-bold block mb-1 uppercase tracking-widest">DOC_STATUS</span>
-              <span className="text-xl font-bold tracking-tight text-secondary">ARCHIVED</span>
+          </div>
+
+          {/* Right Column: Mission Telemetry */}
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2 border-b border-primary/20 pb-2">
+                <Globe size={14} className="text-primary animate-pulse" />
+                <h4 className="text-primary font-bold text-xs tracking-widest uppercase">MISSION_DEBRIEF</h4>
+              </div>
+              <p className="text-sm font-medium text-on-surface-muted leading-relaxed normal-case font-sans">
+                {evt.desc}
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mt-auto">
+              <div className="bg-surface-high p-4 border border-outline/10 flex flex-col justify-center">
+                <span className="text-primary/60 text-[10px] font-bold mb-1 uppercase tracking-[0.2em]">PARTICIPATION</span>
+                <span className="text-lg font-black tracking-tighter text-primary">ACTIVE</span>
+              </div>
+              <div className="bg-surface-high p-4 border border-outline/10 flex flex-col justify-center relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-8 h-8 bg-[repeating-linear-gradient(45deg,transparent,transparent_2px,var(--color-outline)_2px,var(--color-outline)_4px)] opacity-20 group-hover:opacity-40 transition-opacity" />
+                <span className="text-primary/60 text-[10px] font-bold mb-1 uppercase tracking-[0.2em]">DOC_STATUS</span>
+                <span className="text-lg font-black tracking-tighter text-secondary">ARCHIVED</span>
+              </div>
             </div>
           </div>
         </div>

@@ -49,7 +49,7 @@ export function PhotoCarousel({ images }: PhotoCarouselProps) {
       </div>
 
       {/* Main Image View */}
-      <div className="relative flex-1 flex items-center justify-center overflow-hidden bg-black/40 min-h-[300px]">
+      <div className="relative w-full aspect-4/3 sm:aspect-video flex items-center justify-center overflow-hidden bg-black/60">
         <AnimatePresence mode="wait">
           <motion.img
             key={index}
@@ -58,7 +58,7 @@ export function PhotoCarousel({ images }: PhotoCarouselProps) {
             animate={{ opacity: 1, scale: 1, filter: "brightness(1)" }}
             exit={{ opacity: 0, scale: 0.95, filter: "brightness(0)" }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="max-w-full max-h-[70vh] object-contain"
+            className="absolute inset-0 w-full h-full object-cover opacity-90"
             alt={`Event Image ${index + 1}`}
           />
         </AnimatePresence>

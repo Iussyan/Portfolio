@@ -26,6 +26,7 @@ const INITIAL_BOOT_LOGS = [
 export function TerminalWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isHacked, setIsHacked] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
@@ -131,6 +132,13 @@ export function TerminalWidget() {
             <span className="text-secondary">- FULLSCREEN: TOGGLE DISPLAY MODE</span>
             <span className="text-secondary">- CLEAR: PURGE BUFFER</span>
             <span className="text-secondary">- CLOSE: MINIMIZE MODULE</span>
+            <div className="mt-3 flex flex-col gap-1 border-t border-primary/20 pt-2 opacity-60">
+              <span className="text-primary font-bold text-[10px] tracking-widest uppercase">[UNDOCUMENTED_DIRECTIVES]</span>
+              <span className="text-secondary text-[11px] font-mono hover:opacity-100 transition-opacity">* ATTEMPT TO [OVERRIDE] THE CORE.</span>
+              <span className="text-secondary text-[11px] font-mono hover:opacity-100 transition-opacity">* [HACK] THE MAINFRAME ARCHITECTURE.</span>
+              <span className="text-secondary text-[11px] font-mono hover:opacity-100 transition-opacity">* ACCESS [CLASSIFIED] INTEL.</span>
+              <span className="text-secondary text-[11px] font-mono hover:opacity-100 transition-opacity">* INITIATE COMBAT [GAME] SIMULATOR.</span>
+            </div>
           </div>
         ));
         break;
@@ -160,6 +168,47 @@ export function TerminalWidget() {
         router.push("/");
         addLog("info", "RE-ROUTING_TO: Terminal");
         tacticalAudio?.comms();
+        break;
+
+      // EASTER EGGS
+      case "override":
+      case "abort":
+        addLog("error", "PROTOCOL OVERRIDE DENIED. BIOMETRIC SIGNATURE MISMATCH.");
+        tacticalAudio?.error();
+        break;
+      case "classified":
+      case "topsecret":
+        addLog("output", "REDACTED DOCUMENT 404: █ ██████ is █████████ and highly ██████.");
+        break;
+      case "game":
+      case "play":
+        addLog("info", "INITIALIZING COMBAT SIMULATOR...");
+        tacticalAudio?.hum();
+        setTimeout(() => {
+          router.push("/");
+          if (isFullscreen) setIsFullscreen(false);
+        }, 1200);
+        break;
+      case "matrix":
+      case "hack":
+        if (isHacked) return;
+        setIsHacked(true);
+        addLog("info", "INITIATING_BYPASS_PROTOCOL...");
+        tacticalAudio?.type();
+
+        let count = 0;
+        const interval = setInterval(() => {
+          const hex = Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join('');
+          const bin = Array.from({ length: 8 }, () => Math.floor(Math.random() * 2).toString()).join('');
+          addLog("output", `0x${hex} ${bin} DECRYPTING...`);
+          count++;
+          if (count > 8) {
+            clearInterval(interval);
+            addLog("error", "BYPASS FAILED. INSUFFICIENT CLEARANCE.");
+            tacticalAudio?.error();
+            setTimeout(() => setIsHacked(false), 2500);
+          }
+        }, 200);
         break;
       case "cd operator":
         router.push("/about");
@@ -343,10 +392,11 @@ export function TerminalWidget() {
               {logs.map((log, i) => (
                 <div key={i} className={cn(
                   "text-xs sm:text-sm leading-relaxed flex gap-3",
-                  log.type === "command" ? "text-on-surface font-bold" :
-                    log.type === "error" ? "text-tertiary" :
-                      log.type === "info" ? "text-primary/60" :
-                        "text-primary"
+                  isHacked ? "text-emerald-500 font-bold drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]" :
+                    log.type === "command" ? "text-on-surface font-bold" :
+                      log.type === "error" ? "text-tertiary" :
+                        log.type === "info" ? "text-primary/60" :
+                          "text-primary"
                 )}>
                   <span className="opacity-20 shrink-0 select-none hidden sm:block">[{log.timestamp}]</span>
                   <div className="flex-1 whitespace-pre-wrap">{log.content}</div>
@@ -373,8 +423,8 @@ export function TerminalWidget() {
             </div>
 
             {/* Footer */}
-            <div className="border-t border-primary/10 p-2 bg-surface-low text-[9px] font-bold text-on-surface-muted/40 uppercase tracking-tighter flex justify-between items-center px-4 shrink-0">
-              <span>STATUS: STABLE</span>
+            <div className="border-t border-primary/10 p-2 bg-surface-low text-[9px] font-bold text-cyan-400 uppercase tracking-tighter flex justify-between items-center px-4 shrink-0">
+              <span>STATUS : STABLE</span>
               <div className="flex items-center gap-4">
                 <span>LN: {logs.length}</span>
                 <span className="text-secondary">UPLINK_ENCRYPTED</span>

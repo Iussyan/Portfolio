@@ -8,9 +8,9 @@ import { fadeUp, item } from "@/lib/animations";
 import { tacticalAudio } from "@/lib/sounds";
 
 const experiences = [
-  { id: "EXP_01", role: "Frontend Architect", sector: "SEEGLA (Collective)", period: "2023 — Present", task: "Spearheading the frontend architecture for our developer collective by building modular, high-performance web interfaces with React and Next.js." },
-  { id: "EXP_02", role: "Lead Developer", sector: "LUNA App (Health-Tech)", period: "2023 — Present", task: "Architecting a specialized health-tech mobile application using Flutter to provide secure and intuitive menstrual health tracking." },
-  { id: "EXP_03", role: "Indie Game Developer", sector: "Digital Lab", period: "2022 — Present", task: "Fusing logic and creativity through indie game development using Unity and Aseprite to create interactive and educational media experiences." },
+  { id: "EXP_01", role: "Software Engineer", sector: "SEEGLA (Collective)", period: "2026 — Present", task: "Spearheading the software architecture for our developer collective by building modular, high-performance web and mobile interfaces with React and Next.js." },
+  { id: "EXP_02", role: "Lead Developer", sector: "LUNA App (Health-Tech)", period: "2026 — Present", task: "Architecting a specialized health-tech mobile application using Flutter to provide secure and intuitive menstrual health tracking." },
+  { id: "EXP_03", role: "Indie Game Developer", sector: "Digital Lab", period: "2025 — Present", task: "Fusing logic and creativity through indie game development using Unity and Aseprite to create interactive and educational media experiences." },
 ];
 
 const loadoutItems = [
@@ -126,9 +126,9 @@ export default function About() {
         <section className="relative border-l-4 border-primary bg-surface-low p-8 flex flex-col md:flex-row gap-8 items-start">
           <div className="hud-marker" />
           <div className="w-40 h-40 bg-surface-high border border-outline relative overflow-hidden shrink-0 group/dossier">
-            <img 
-              src="/assets/profile/operator.jfif" 
-              alt="Operator Profile" 
+            <img
+              src="/assets/profile/operator.jfif"
+              alt="Operator Profile"
               className="w-full h-full object-cover grayscale group-hover/dossier:grayscale-0 transition-all duration-500"
             />
             <div className="absolute inset-0 border-[0.5px] border-primary/20 pointer-events-none" />
@@ -142,7 +142,7 @@ export default function About() {
               SILVANO, JULIUS JR. K.
             </motion.h1>
             <motion.p {...fadeUp(0.25)} className="text-on-surface-muted text-base leading-relaxed max-w-2xl font-sans mt-2">
-              3rd Year BS IT student and Software Engineer specializing in modern web architectures and mobile systems. 
+              3rd Year BS IT student and Software Engineer specializing in modern web architectures and mobile systems.
               Bridging React, Flutter, and Game Development to create unique digital experiences.
             </motion.p>
           </div>
@@ -239,8 +239,8 @@ export default function About() {
               { title: "B.S. Information Technology", org: "Quezon City University", date: "2023 — 2027", status: "IN_PROGRESS" },
               { title: "Senior High School (ICT)", org: "San Francisco High School", date: "2021 — 2023", status: "GRADUATED" },
             ].map((edu) => (
-              <div 
-                key={edu.title} 
+              <div
+                key={edu.title}
                 className="bg-surface-low p-6 flex flex-col gap-2 border border-outline/5 relative group cursor-pointer hover:bg-surface-high transition-colors"
                 onClick={() => openEducationModal(edu)}
               >
@@ -248,8 +248,8 @@ export default function About() {
                 <span className="text-[10px] font-mono text-secondary font-bold tracking-widest uppercase group-hover:text-primary transition-colors">{edu.date}</span>
                 <h3 className="text-base font-bold text-on-surface group-hover:glitch-text" data-text={edu.title}>{edu.title}</h3>
                 <div className="flex items-center justify-between mt-auto">
-                    <span className="text-xs text-on-surface-muted font-bold tracking-tight uppercase">{edu.org}</span>
-                    <span className="text-[10px] font-mono text-primary/40 font-black italic">{edu.status}</span>
+                  <span className="text-xs text-on-surface-muted font-bold tracking-tight uppercase">{edu.org}</span>
+                  <span className="text-[10px] font-mono text-primary/40 font-black italic">{edu.status}</span>
                 </div>
               </div>
             ))}
