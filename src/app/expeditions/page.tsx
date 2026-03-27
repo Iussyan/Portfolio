@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Award, Calendar, ExternalLink, Globe, Milestone, Terminal } from "lucide-react";
+import { Award, Calendar, ExternalLink, Globe, MapPin, Maximize2, Milestone, Terminal } from "lucide-react";
 import { useState, useEffect } from "react";
 import { TacticalModal } from "@/components/ui/TacticalModal";
 import { fadeUp, stagger, item } from "@/lib/animations";
@@ -15,8 +15,9 @@ const certificates = [
     issuer: "-- PENDING --",
     date: "-- PENDING --",
     skills: ["-- PENDING --", "-- PENDING --", "-- PENDING --"],
-    credentialId: "-- PENDING --",
-    type: "-- PENDING --"
+    credential_id: "-- PENDING --",
+    type: "-- PENDING --",
+    image_url: ""
   },
   {
     id: "CERT_02",
@@ -24,8 +25,9 @@ const certificates = [
     issuer: "-- PENDING --",
     date: "-- PENDING --",
     skills: ["-- PENDING --", "-- PENDING --", "-- PENDING --"],
-    credentialId: "-- PENDING --",
-    type: "-- PENDING --"
+    credential_id: "-- PENDING --",
+    type: "-- PENDING --",
+    image_url: ""
   },
   {
     id: "CERT_03",
@@ -33,8 +35,9 @@ const certificates = [
     issuer: "-- PENDING --",
     date: "-- PENDING --",
     skills: ["-- PENDING --", "-- PENDING --", "-- PENDING --"],
-    credentialId: "-- PENDING --",
-    type: "-- PENDING --"
+    credential_id: "-- PENDING --",
+    type: "-- PENDING --",
+    image_url: ""
   }
 ];
 
@@ -51,7 +54,7 @@ const events = [
       "/assets/expeditions/agent_camp_3.jpeg",
       "/assets/expeditions/agent_camp_4.jpeg"
     ],
-    desc: "Intensive training on AI agents and automation. Explored various frameworks for deploying agentic systems in enterprise environments."
+    description: "Intensive training on AI agents and automation. Explored various frameworks for deploying agentic systems in enterprise environments."
   },
   {
     id: "RAW_02",
@@ -65,7 +68,7 @@ const events = [
       "/assets/expeditions/bwai_gdg_3.jpeg",
       "/assets/expeditions/bwai_gdg_4.jpeg"
     ],
-    desc: "Collaborated with Google Developer Group members to explore generative AI capabilities and practical implementations using Gemini and Vertex AI."
+    description: "Collaborated with Google Developer Group members to explore generative AI capabilities and practical implementations using Gemini and Vertex AI."
   },
   {
     id: "RAW_03",
@@ -81,7 +84,7 @@ const events = [
       "/assets/expeditions/devcamp_2026_5.jpeg",
       "/assets/expeditions/devcamp_2026_6.jpeg"
     ],
-    desc: "ACHIEVED TOP 15 FINALISTS REPRESENTING SEEGLA // Future-tech hackathon focused on decentralized ecosystems, advanced full-stack architectures, and the evolution of AI-integrated development environments."
+    description: "ACHIEVED TOP 15 FINALISTS REPRESENTING SEEGLA // Future-tech hackathon focused on decentralized ecosystems, advanced full-stack architectures, and the evolution of AI-integrated development environments."
   },
   {
     id: "RAW_04",
@@ -95,7 +98,7 @@ const events = [
       "/assets/expeditions/genz_aitoz_3.jpeg",
       "/assets/expeditions/genz_aitoz_4.jpeg"
     ],
-    desc: "Exploring the impact of artificial intelligence on the new generation of developers and professionals. Discussed ethical AI and the future of work."
+    description: "Exploring the impact of artificial intelligence on the new generation of developers and professionals. Discussed ethical AI and the future of work."
   },
   {
     id: "RAW_05",
@@ -109,7 +112,7 @@ const events = [
       "/assets/expeditions/software_freedom_day_3.jpeg",
       "/assets/expeditions/software_freedom_day_4.jpeg"
     ],
-    desc: "Global celebration of Free and Open Source Software (FOSS). Participated in workshops promoting software freedom and digital sovereignty."
+    description: "Global celebration of Free and Open Source Software (FOSS). Participated in workshops promoting software freedom and digital sovereignty."
   },
   {
     id: "RAW_06",
@@ -123,7 +126,7 @@ const events = [
       "/assets/expeditions/wordpress_devcon_3.jpeg",
       "/assets/expeditions/wordpress_devcon_4.jpeg"
     ],
-    desc: "Deep-dive into WordPress core development, theme architecture, and high-performance hosting solutions for enterprise-grade sites."
+    description: "Deep-dive into WordPress core development, theme architecture, and high-performance hosting solutions for enterprise-grade sites."
   },
   {
     id: "RAW_07",
@@ -137,7 +140,7 @@ const events = [
       "/assets/expeditions/wordpress_manila_meetup_3.jpeg",
       "/assets/expeditions/wordpress_manila_meetup_4.jpeg"
     ],
-    desc: "Monthly gathering of WordPress enthusiasts to share best practices, troubleshooting tips, and the latest news from the global community."
+    description: "Monthly gathering of WordPress enthusiasts to share best practices, troubleshooting tips, and the latest news from the global community."
   }
 ];
 
@@ -152,6 +155,29 @@ export default function Expeditions() {
   const [activeModal, setActiveModal] = useState<{ title: string; subtitle?: string; content: React.ReactNode } | null>(null);
   const [sortOrder, setSortOrder] = useState<'OLDEST_FIRST' | 'LATEST_FIRST'>('OLDEST_FIRST');
   const [syncDate, setSyncDate] = useState<string | number>("AWAITING_SYNC...");
+  const [certificates, setCertificates] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      const { supabase } = await import("@/lib/supabase");
+      if (!supabase) return;
+
+      const { data: certs } = await supabase.from('certificates').select('*').order('date', { ascending: true });
+      const { data: exps } = await supabase.from('expeditions').select('*').order('date', { ascending: true });
+
+      if (certs) setCertificates(certs);
+      if (exps) setEvents(exps);
+      setIsLoading(false);
+    };
+    loadData();
+
+    const date = new Date();
+    const formattedDate = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+    setSyncDate(formattedDate);
+    tacticalAudio?.comms();
+  }, []);
 
   // Sorted events computation
   const sortedEvents = [...events].sort((a, b) => {
@@ -160,44 +186,102 @@ export default function Expeditions() {
     return sortOrder === 'OLDEST_FIRST' ? dateA - dateB : dateB - dateA;
   });
 
-  useEffect(() => {
-    const date = new Date();
-    const formattedDate = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
-    setSyncDate(formattedDate);
-    tacticalAudio?.comms();
-  }, []);
+  const openCertModal = (cert: any) => {
+    const isUrl = (str: string) => str?.startsWith('http');
 
-  const openCertModal = (cert: typeof certificates[0]) => {
     setActiveModal({
       title: cert.title,
       subtitle: `ISSUER: ${cert.issuer} // ${cert.date}`,
       content: (
-        <div className="flex flex-col gap-6 font-mono text-base uppercase">
-          <div className="border-l-2 border-primary pl-4 py-2 bg-primary/5">
-            <span className="text-primary font-extrabold text-sm tracking-widest">CERTIFICATE_ID: {cert.credentialId}</span>
-          </div>
-          <div className="flex flex-col gap-3">
-            <h4 className="text-secondary font-bold text-xs tracking-widest uppercase">VERIFIED_COMPETENCIES</h4>
-            <div className="flex flex-wrap gap-2">
-              {cert.skills.map((s, index) => (
-                <span key={`${s}-${index}`} className="px-3 py-1 bg-surface-high border border-outline/20 text-xs font-bold text-on-surface-muted">
-                  {s}
-                </span>
-              ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-mono text-base uppercase">
+          {/* Left Column: Intelligence Asset */}
+          <div className="flex flex-col gap-4">
+            {cert.image_url ? (
+              <div className="relative w-full aspect-[1.414/1] bg-surface-high border border-outline/10 overflow-hidden group">
+                <img
+                  src={cert.image_url}
+                  alt={cert.title}
+                  className="w-full h-full object-contain grayscale group-hover:grayscale-0 transition-all duration-700"
+                />
+                <div className="absolute inset-0 scanlines opacity-20 pointer-events-none" />
+
+                {/* Expand Button Bridge */}
+                <a
+                  href={cert.image_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute top-3 right-3 p-2 bg-primary/20 backdrop-blur-md border border-primary/30 text-primary hover:bg-primary hover:text-white transition-all opacity-0 group-hover:opacity-100 flex items-center gap-2 z-10"
+                  title="EXPAND_VIEW"
+                >
+                  <Maximize2 size={12} />
+                </a>
+              </div>
+            ) : (
+              <div className="aspect-[1.414/1] bg-surface-high border border-dashed border-outline/20 flex flex-col items-center justify-center gap-4 text-on-surface-muted group">
+                <Award size={48} className="opacity-20 group-hover:opacity-40 transition-opacity" />
+                <span className="text-[10px] font-black tracking-widest uppercase">ASSET_NOT_ARCHIVED</span>
+              </div>
+            )}
+
+            <div className="border-l-2 border-primary pl-4 py-3 bg-primary/5 mt-auto">
+              <span className="text-primary font-extrabold text-[11px] tracking-widest block uppercase mb-1">CREDENTIAL_ID</span>
+              <span className="text-on-surface font-black text-sm">{cert.credential_id || 'NOT_ASSIGNED'}</span>
             </div>
           </div>
-          <div className="bg-surface-high p-5 border border-outline/10 text-xs text-on-surface-muted italic normal-case font-sans leading-relaxed">
-            This credential verifies the individual's proficiency in {cert.skills.join(", ")} as per the standards set by {cert.issuer}.
+
+          {/* Right Column: Mission Telemetry */}
+          <div className="flex flex-col gap-6 text-on-surface">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2 border-b border-secondary/20 pb-2">
+                <Award size={14} className="text-secondary animate-pulse" />
+                <h4 className="text-secondary font-bold text-xs tracking-widest uppercase">VERIFIED_COMPETENCIES</h4>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {cert.skills?.map((s: string, index: number) => (
+                  <span key={`${s}-${index}`} className="px-3 py-1 bg-surface-high border border-outline/20 text-[10px] font-bold text-on-surface-muted group-hover:border-secondary transition-colors">
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2 border-b border-primary/20 pb-2">
+                <Terminal size={14} className="text-primary" />
+                <h4 className="text-primary font-bold text-xs tracking-widest uppercase">CADET_DEBRIEF</h4>
+              </div>
+              <div className="bg-surface-high p-4 border border-outline/10 text-[11px] text-on-surface-muted italic normal-case font-sans leading-relaxed relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-8 h-8 bg-outline/5 rotate-45 translate-x-4 -translate-y-4" />
+                This official credential certifies professional proficiency in {cert.skills?.join(", ")} as validated by {cert.issuer} on {cert.date}.
+              </div>
+            </div>
+
+            <div className="mt-auto">
+              {cert.verify_link && (
+                isUrl(cert.verify_link) ? (
+                  <a
+                    href={cert.verify_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-tactical bg-primary/10 border-primary text-primary text-center py-4 text-xs font-black uppercase flex items-center justify-center gap-2 hover:bg-primary/20 transition-all w-full"
+                  >
+                    <ExternalLink size={14} /> VERIFY_VIA_UPLINK {">>"}
+                  </a>
+                ) : (
+                  <div className="bg-surface-high p-4 border border-outline/10 flex flex-col items-center justify-center gap-1 group">
+                    <span className="text-[9px] text-on-surface-muted font-bold tracking-widest group-hover:text-primary transition-colors uppercase">VERIFICATION_ACCESS_CODE</span>
+                    <span className="text-lg text-primary font-black tracking-tighter">{cert.verify_link}</span>
+                  </div>
+                )
+              )}
+            </div>
           </div>
-          <button className="btn-tactical btn-tactical-primary text-center py-4 text-sm font-black uppercase flex items-center justify-center gap-2">
-            <ExternalLink size={16} /> VERIFY_CREDENTIAL {">>"}
-          </button>
         </div>
       )
     });
   };
 
-  const openEventModal = (evt: typeof events[0]) => {
+  const openEventModal = (evt: any) => {
     setActiveModal({
       title: evt.name,
       subtitle: `TYPE: ${evt.type} // ${evt.date}`,
@@ -219,8 +303,8 @@ export default function Expeditions() {
                 <Globe size={14} className="text-primary animate-pulse" />
                 <h4 className="text-primary font-bold text-xs tracking-widest uppercase">MISSION_DEBRIEF</h4>
               </div>
-              <p className="text-sm font-medium text-on-surface-muted leading-relaxed normal-case font-sans">
-                {evt.desc}
+              <p className="text-sm font-medium text-on-surface-muted leading-relaxed normal-case font-sans border-l border-primary/10 pl-4 whitespace-pre-wrap">
+                {evt.description || 'MISSION_DESCRIPTION_NOT_ARCHIVED'}
               </p>
             </div>
 
@@ -294,7 +378,7 @@ export default function Expeditions() {
                 <div className="flex flex-col gap-2">
                   <span className="text-xs text-on-surface-muted font-bold tracking-tight uppercase">ISSUER: {cert.issuer}</span>
                   <div className="flex flex-wrap gap-2">
-                    {cert.skills.slice(0, 3).map((s, index) => (
+                    {cert.skills.slice(0, 3).map((s: string, index: number) => (
                       <span key={`${s}-${index}`} className="text-xs font-mono border border-outline/20 px-2 py-0.5 text-on-surface-muted group-hover:border-secondary/40 group-hover:text-secondary transition-colors uppercase">
                         {s}
                       </span>
@@ -336,8 +420,11 @@ export default function Expeditions() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-px bg-outline/5">
-            {sortedEvents.map((evt, idx) => (
+          <div className="relative flex flex-col gap-8">
+            {/* Timeline Vertical Axis */}
+            <div className="absolute left-[23px] md:left-[64px] top-4 bottom-4 w-px bg-outline/10 hidden sm:block" />
+
+            {sortedEvents.map((evt: any, idx: number) => (
               <motion.div
                 key={evt.id}
                 variants={item}
@@ -345,15 +432,18 @@ export default function Expeditions() {
                 whileInView="show"
                 viewport={{ once: true }}
                 onClick={() => openEventModal({ ...evt, id: `EVT_${String(idx + 1).padStart(2, '0')}` })}
-                className="bg-surface-low p-4 sm:p-6 flex flex-col md:flex-row gap-6 group hover:bg-surface-high cursor-pointer border-b border-outline/5 md:border-b-0"
+                className="relative flex flex-col md:flex-row gap-6 group cursor-pointer"
               >
+                {/* Timeline Node */}
+                <div className="absolute left-[20px] md:left-[61px] top-6 w-2 h-2 bg-surface border border-secondary ring-4 ring-secondary/10 rounded-full z-10 hidden sm:block group-hover:scale-150 group-hover:bg-secondary transition-all duration-300" />
+
                 {/* Thumbnail Section */}
-                <div className="w-full md:w-32 h-32 bg-surface-high border border-outline/10 shrink-0 relative overflow-hidden">
+                <div className="w-full md:w-32 h-32 bg-surface-high border border-outline/10 shrink-0 relative overflow-hidden ml-0 sm:ml-16 md:ml-0">
                   {evt.images && evt.images.length > 0 ? (
                     <img
                       src={evt.images[0]}
                       alt=""
-                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 scale-110 group-hover:scale-100"
+                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-110 group-hover:scale-100"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-surface-medium text-primary/20">
@@ -361,23 +451,38 @@ export default function Expeditions() {
                     </div>
                   )}
                   <div className="absolute inset-0 scanlines opacity-30" />
-                  <div className="absolute top-0 left-0 w-1 h-1 bg-primary" />
+                  <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-primary/40" />
                 </div>
 
-                <div className="flex-1 flex flex-col md:flex-row gap-6">
+                <div className="flex-1 flex flex-col md:flex-row gap-6 p-6 bg-surface-high/20 border border-outline/5 hover:border-secondary/30 transition-all relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-outline/5 rotate-45 translate-x-8 -translate-y-8 pointer-events-none" />
+                  
                   <div className="flex flex-col gap-1 min-w-[120px]">
                     <div className="flex flex-col">
                       <span className="text-[10px] text-primary/60 font-mono font-bold tracking-tighter">EVT_{String(idx + 1).padStart(2, '0')}</span>
-                      <span className="text-xs text-secondary font-mono tracking-widest font-bold uppercase">{evt.date}</span>
+                      <span className="text-[13px] text-secondary font-mono tracking-widest font-black uppercase">{evt.date}</span>
                     </div>
-                    <span className="text-[10px] font-bold text-on-surface-muted tracking-tight underline decoration-secondary/30">LOC: {evt.location}</span>
+                    <div className="flex items-center gap-1.5 opacity-60">
+                       <MapPin size={10} className="text-secondary" />
+                       <span className="text-[10px] font-bold text-on-surface-muted tracking-tight uppercase">{evt.location}</span>
+                    </div>
                   </div>
-                  <div className="flex-1 flex flex-col gap-2">
-                    <h3 className="text-base font-extrabold tracking-tight text-on-surface group-hover:text-secondary transition-colors italic">[{evt.name}]</h3>
-                    <p className="text-sm text-on-surface-muted leading-relaxed font-sans font-medium line-clamp-1">{evt.desc}</p>
+
+                  <div className="flex-1 flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                       <h3 className="text-lg font-black tracking-tighter text-on-surface group-hover:text-secondary transition-colors italic uppercase">[{evt.name}]</h3>
+                       <div className="h-px flex-1 bg-outline/5 hidden lg:block" />
+                    </div>
+                    <p className="text-sm text-on-surface-muted leading-relaxed font-sans font-medium line-clamp-2 max-w-2xl">{evt.description}</p>
                   </div>
-                  <div className="flex justify-end items-start">
-                    <span className="text-xs font-mono border border-outline/20 px-2 py-0.5 text-on-surface-muted group-hover:border-secondary/40 group-hover:text-secondary transition-colors uppercase">TYPE: {evt.type}</span>
+
+                  <div className="flex flex-col justify-between items-end gap-4 min-w-[100px]">
+                    <span className="text-[9px] font-mono border border-outline/20 px-3 py-1 text-on-surface-muted group-hover:border-secondary group-hover:text-secondary transition-all uppercase tracking-widest font-black">
+                       {evt.type}
+                    </span>
+                    <div className="flex gap-1">
+                       {[1,2,3].map(i => <div key={i} className="w-1 h-3 bg-secondary/10 group-hover:bg-secondary/40 transition-colors" />)}
+                    </div>
                   </div>
                 </div>
               </motion.div>

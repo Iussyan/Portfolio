@@ -8,11 +8,12 @@ import { fadeUp, item } from "@/lib/animations";
 import { tacticalAudio } from "@/lib/sounds";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { useMetadata } from "@/lib/useMetadata";
+import { useAchievement } from "@/components/providers/AchievementProvider";
 
 const experiences = [
-  { id: "EXP_01", role: "Software Engineer", sector: "SEEGLA (Collective)", period: "2026 — Present", task: "Spearheading the software architecture for our developer collective by building modular, high-performance web and mobile interfaces with React and Next.js." },
-  { id: "EXP_02", role: "Lead Developer", sector: "LUNA App (Health-Tech)", period: "2026 — Present", task: "Architecting a specialized health-tech mobile application using Flutter to provide secure and intuitive menstrual health tracking." },
-  { id: "EXP_03", role: "Indie Game Developer", sector: "Digital Lab", period: "2025 — Present", task: "Fusing logic and creativity through indie game development using Unity and Aseprite to create interactive and educational media experiences." },
+  { id: "EXP_01", role: "Software Engineer", sector: "SEEGLA (Collective)", period: "2026 — Present", task: "Engineering modular, high-performance architectures for a premier developer collective. Optimized frontend delivery pipelines and integrated robust state management systems using React and Next.js." },
+  { id: "EXP_02", role: "Lead Developer", sector: "LUNA App (Health-Tech)", period: "2026 — Present", task: "Spearheading the technical development of a privacy-first health-tech platform. Implemented end-to-end encryption within a high-performance Flutter mobile environment to secure sensitive biometric data." },
+  { id: "EXP_03", role: "Indie Game Developer", sector: "Digital Lab", period: "2025 — Present", task: "Pioneering interactive storytelling through cross-platform game development. Leveraging Unity and C# to deploy high-fidelity digital experiences that bridge educational objectives with immersive gameplay." },
 ];
 
 const loadoutItems = [
@@ -26,14 +27,18 @@ export default function About() {
   const [activeModal, setActiveModal] = useState<{ title: string; subtitle?: string; content: React.ReactNode } | null>(null);
   const { theme, toggleTheme } = useTheme();
 
+  const { unlockAchievement } = useAchievement();
+
   // Play comms sound on load
   useEffect(() => {
     tacticalAudio?.comms();
-  }, []);
+    unlockAchievement("INTEL_RECON");
+  }, [unlockAchievement]);
 
   const handleThemeToggle = () => {
     tacticalAudio?.glitch();
     toggleTheme();
+    unlockAchievement("THEME_OVERRIDE");
   };
 
   const openExperienceModal = (exp: typeof experiences[0]) => {
@@ -156,8 +161,8 @@ export default function About() {
               SILVANO, JULIUS JR. K.
             </motion.h1>
             <motion.p {...fadeUp(0.25)} className="text-on-surface-muted text-base leading-relaxed max-w-2xl font-sans mt-2">
-              3rd Year BS IT student and Software Engineer specializing in modern web architectures and mobile systems.
-              Bridging React, Flutter, and Game Development to create unique digital experiences.
+              Strategic software engineer and 3rd-year IT scholar focused on architecting resilient, high-impact digital systems.
+              Leveraging the intersection of React, Flutter, and Game Engine technology to deploy tactical solutions for complex problems across the web and mobile landscape.
             </motion.p>
           </div>
           <div className="ms-auto flex flex-col items-end gap-3 text-right">

@@ -10,6 +10,7 @@ import { tacticalAudio } from "@/lib/sounds";
 import { TargetScannerGame } from "@/components/ui/TargetScannerGame";
 import { supabase } from "@/lib/supabase";
 import { useMetadata } from "@/lib/useMetadata";
+import { useAchievement } from "@/components/providers/AchievementProvider";
 import { cn } from "@/lib/utils";
 
 const RecentActivity = [
@@ -80,9 +81,12 @@ export default function Home() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  const { unlockAchievement } = useAchievement();
+
   useEffect(() => {
     setMounted(true);
-  }, []);
+    unlockAchievement("SYSTEM_ONLINE");
+  }, [unlockAchievement]);
 
 
   useEffect(() => {
@@ -182,7 +186,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="flex flex-col gap-6">
               <div className="relative w-full aspect-square surface-high border border-primary/20 overflow-hidden">
-                <img src="/assets/profile/operator.jpeg" alt="Operator" className="w-full h-full object-cover grayscale" />
+                <img src="/assets/profile/operator.jpeg" alt="Operator" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
                 <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-primary" />
                 <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-primary" />
@@ -216,7 +220,7 @@ export default function Home() {
               <div className="flex flex-col gap-3 mt-2">
                 <h4 className="text-[10px] text-primary font-black tracking-[0.3em] uppercase">SYSTEM_OBJECTIVES</h4>
                 <div className="p-4 bg-surface-high border border-outline/10 text-xs leading-relaxed text-on-surface-muted italic">
-                  Currently focused on developing secure, high-performance web architectures and immersive interface designs. 
+                  Currently focused on developing secure, high-performance web architectures and immersive interface designs.
                   Continuous integration of next-gen technologies for tactical software deployment.
                 </div>
               </div>
@@ -224,11 +228,11 @@ export default function Home() {
           </div>
 
           <div className="border-t border-outline/10 pt-6 flex flex-wrap gap-3">
-             {["REACT", "NEXTJS", "JAVA", "FLUTTER", "POSTGRES"].map(tag => (
-               <span key={tag} className="px-3 py-1 bg-primary/10 text-primary text-[9px] font-black tracking-widest border border-primary/20 uppercase">
-                 {tag}
-               </span>
-             ))}
+            {["REACT", "NEXTJS", "JAVA", "FLUTTER", "POSTGRES"].map(tag => (
+              <span key={tag} className="px-3 py-1 bg-primary/10 text-primary text-[9px] font-black tracking-widest border border-primary/20 uppercase">
+                {tag}
+              </span>
+            ))}
           </div>
         </div>
       )
@@ -261,7 +265,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-          
+
           <div className="flex flex-col gap-2">
             <span className="text-primary/60 text-[11px] font-bold tracking-widest">TELEMETRY_STREAM</span>
             <div className="p-4 bg-surface text-[11px] text-on-surface-muted italic flex flex-col gap-1 opacity-70">
@@ -349,8 +353,8 @@ export default function Home() {
             </div>
             <div className="flex flex-col gap-px bg-outline/5 border border-outline/10 max-h-[250px] overflow-y-auto tactical-scrollbar relative group">
               {logs.length > 0 ? logs.map((log) => (
-                <div 
-                  key={log.id} 
+                <div
+                  key={log.id}
                   onClick={() => openDetailedLogModal(log)}
                   className="bg-surface-low/50 p-4 hover:bg-surface-medium transition-all group/log border-b border-outline/5 last:border-b-0 cursor-pointer"
                 >
@@ -380,7 +384,7 @@ export default function Home() {
           <div className="relative">
             <div className="absolute -inset-8 border border-primary/20 animate-[spin_20s_linear_infinite]" />
             <div className="absolute -inset-4 border border-secondary/20 animate-[spin_15s_linear_infinite_reverse]" />
-            <div 
+            <div
               onClick={openProfileModal}
               className="w-59 h-59 surface-high relative overflow-hidden flex items-center justify-center group/avatar cursor-pointer"
             >

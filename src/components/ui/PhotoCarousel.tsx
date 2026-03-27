@@ -58,7 +58,7 @@ export function PhotoCarousel({ images }: PhotoCarouselProps) {
             animate={{ opacity: 1, scale: 1, filter: "brightness(1)" }}
             exit={{ opacity: 0, scale: 0.95, filter: "brightness(0)" }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="absolute inset-0 w-full h-full object-cover opacity-90"
+            className="absolute inset-0 w-full h-full object-contain opacity-90"
             alt={`Event Image ${index + 1}`}
           />
         </AnimatePresence>
@@ -98,7 +98,15 @@ export function PhotoCarousel({ images }: PhotoCarouselProps) {
         </div>
         <div className="flex items-center gap-3">
           <span>CH: 01</span>
-          <Maximize2 size={10} className="text-secondary/40" />
+          <a
+            href={images[index]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-secondary/60 hover:text-secondary hover:scale-110 transition-all"
+            title="EXPAND_SIGNAL"
+          >
+            <Maximize2 size={12} />
+          </a>
         </div>
       </div>
     </div>

@@ -3,11 +3,12 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { ArrowUpRight, Folder, Terminal } from "lucide-react";
+import { ArrowUpRight, Folder, Terminal, Maximize2, ExternalLink, Award, Activity } from "lucide-react";
 import { TacticalModal } from "@/components/ui/TacticalModal";
 import { fadeUp, stagger, item } from "@/lib/animations";
 import { tacticalAudio } from "@/lib/sounds";
 import { supabase } from "@/lib/supabase";
+import { useAchievement } from "@/components/providers/AchievementProvider";
 
 export default function Projects() {
   const [projects, setProjects] = useState<any[]>([]);
@@ -53,34 +54,124 @@ export default function Projects() {
     };
   }, []);
 
+  const { unlockAchievement } = useAchievement();
+
   const openProjectModal = (p: any) => {
+    unlockAchievement("MISSION_ANALYST");
     setActiveModal({
       title: p.title,
-      subtitle: `MISSION_ID: ${p.id.split('-')[0]} // ${p.category}`,
+      subtitle: `SECTOR: ${p.category} // ${p.status}`,
       content: (
-        <div className="flex flex-col gap-6 font-mono text-base uppercase">
-          <div className="border-l-2 border-primary pl-4 py-2 bg-primary/5">
-            <span className="text-primary font-extrabold text-sm tracking-widest">PROJECT_ID: {p.id}</span>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-mono text-base uppercase">
+          {/* Left Column: Mission Intelligence */}
           <div className="flex flex-col gap-4">
-            <h4 className="text-secondary font-bold text-xs tracking-widest uppercase">MISSION_OVERVIEW</h4>
-            <p className="text-base font-bold text-on-surface leading-snug normal-case font-sans">
-              {p.task}
-            </p>
-          </div>
-          <div className="flex flex-col gap-3">
-            <h4 className="text-primary font-bold text-xs tracking-widest uppercase">TECHNICAL_STACK</h4>
-            <div className="flex flex-wrap gap-2">
-              {p.stack.map((s: string) => (
-                <span key={s} className="px-3 py-1 bg-surface-high border border-outline/20 text-xs font-bold text-on-surface-muted">
-                  {s}
-                </span>
-              ))}
+            {p.image_url ? (
+              <div className="relative w-full aspect-video border border-outline/10 bg-surface-high overflow-hidden group/modal-img">
+                <img 
+                  src={p.image_url} 
+                  alt={p.title} 
+                  className="w-full h-full object-contain grayscale group-hover/modal-img:grayscale-0 transition-all duration-700" 
+                />
+                <div className="absolute inset-0 scanlines opacity-20 pointer-events-none" />
+                
+                {/* EXPAND_SIGNAL Protocol */}
+                <a
+                  href={p.image_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute top-3 right-3 p-2 bg-primary/20 backdrop-blur-md border border-primary/30 text-primary hover:bg-primary hover:text-white transition-all opacity-0 group-hover/modal-img:opacity-100 flex items-center gap-2 z-10"
+                  title="EXPAND_MISSION_ASSET"
+                >
+                  <Maximize2 size={12} />
+                </a>
+              </div>
+            ) : (
+              <div className="aspect-video bg-surface-high border border-dashed border-outline/20 flex flex-col items-center justify-center gap-4 text-on-surface-muted">
+                <Activity size={48} className="opacity-20 translate-y-2 animate-pulse" />
+                <span className="text-[10px] font-black tracking-widest uppercase">ASSET_ENCRYPTED</span>
+              </div>
+            )}
+            
+            <div className="border-l-2 border-primary pl-4 py-3 bg-primary/5">
+              <span className="text-primary font-extrabold text-[11px] tracking-widest block uppercase mb-1">MISSION_ID</span>
+              <span className="text-on-surface font-black text-sm">{p.id.split('-')[0].toUpperCase()}</span>
+            </div>
+
+            <div className="flex flex-col gap-3 mt-auto">
+               <div className="flex items-center gap-2 border-b border-primary/20 pb-2">
+                  <Terminal size={14} className="text-primary" />
+                  <h4 className="text-primary font-bold text-xs tracking-widest uppercase">TECH_STACK</h4>
+               </div>
+               <div className="flex flex-wrap gap-2">
+                 {p.stack.map((s: string) => (
+                   <span key={s} className="px-3 py-1 bg-surface-high border border-outline/20 text-[10px] font-bold text-on-surface-muted hover:border-secondary transition-colors">
+                     {s}
+                   </span>
+                 ))}
+               </div>
             </div>
           </div>
-          <Link href={p.link} target="_blank" rel="noopener noreferrer" className="btn-tactical btn-tactical-primary text-center py-4 text-sm font-black uppercase flex items-center justify-center gap-2">
-            OPEN_SECURE_LINK <ArrowUpRight size={16} />
-          </Link>
+
+          {/* Right Column: Tactical Debrief */}
+          <div className="flex flex-col gap-6 text-on-surface">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2 border-b border-secondary/20 pb-2">
+                <Activity size={14} className="text-secondary animate-pulse" />
+                <h4 className="text-secondary font-bold text-xs tracking-widest uppercase">MISSION_OVERVIEW</h4>
+              </div>
+              <p className="text-[13px] leading-relaxed normal-case font-sans italic text-on-surface/80 bg-surface-high/50 p-4 border border-outline/5">
+                {p.task}
+              </p>
+            </div>
+
+            {p.challenge && (
+              <div className="flex flex-col gap-3">
+                <h4 className="text-tertiary font-bold text-[10px] tracking-widest uppercase flex items-center gap-2">
+                   <div className="w-1 h-1 bg-tertiary" /> 
+                   THE_CHALLENGE
+                </h4>
+                <p className="text-[12px] text-on-surface-muted leading-relaxed normal-case font-sans border-l border-tertiary/20 pl-4">
+                  {p.challenge}
+                </p>
+              </div>
+            )}
+
+            {p.solution && (
+              <div className="flex flex-col gap-3">
+                <h4 className="text-primary font-bold text-[10px] tracking-widest uppercase flex items-center gap-2">
+                   <div className="w-1 h-1 bg-primary" />
+                   SOL_ARCHITECTURE
+                </h4>
+                <p className="text-[12px] text-on-surface-muted leading-relaxed normal-case font-sans border-l border-primary/20 pl-4">
+                  {p.solution}
+                </p>
+              </div>
+            )}
+
+            {p.results && (
+              <div className="flex flex-col gap-4 pt-2">
+                 <div className="border-t border-emerald-400/20 pt-4">
+                    <h4 className="text-emerald-400 font-bold text-xs tracking-widest uppercase flex items-center gap-2 mb-2">
+                       <Award size={14} /> MISSION_OUTCOME
+                    </h4>
+                    <div className="bg-emerald-500/5 p-4 border border-emerald-500/10 text-[12px] text-emerald-400/80 leading-relaxed italic normal-case font-sans">
+                       {p.results}
+                    </div>
+                 </div>
+              </div>
+            )}
+
+            <div className="mt-auto pt-6">
+              <a 
+                href={p.link} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="btn-tactical btn-tactical-primary w-full py-4 text-xs font-black uppercase flex items-center justify-center gap-3"
+              >
+                <ExternalLink size={14} /> OPEN_SECURE_UPLINK {">>"}
+              </a>
+            </div>
+          </div>
         </div>
       )
     });

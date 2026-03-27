@@ -60,6 +60,7 @@ export function Navbar() {
               <Link
                 key={item.path}
                 href={item.path}
+                aria-label={`Navigate to ${item.label}`}
                 className={cn(
                   "relative px-4 py-1.5 text-xs font-bold tracking-[0.2em] transition-all duration-200 uppercase flex items-center gap-2",
                   isActive ? "text-primary bg-primary/5" : "text-on-surface-muted hover:text-on-surface hover:bg-surface-high"
@@ -72,7 +73,7 @@ export function Navbar() {
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
-                <span className="opacity-60">{item.icon}</span>
+                <span className="opacity-60" aria-hidden="true">{item.icon}</span>
                 <span className="relative z-10">{item.name}</span>
               </Link>
             );
@@ -99,6 +100,8 @@ export function Navbar() {
           <button
             className="md:hidden p-2 text-primary hover:bg-surface-high transition-colors border border-outline/10"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-expanded={isMobileMenuOpen}
+            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
           >
             {isMobileMenuOpen ? <CloseIcon size={20} /> : <Menu size={20} />}
           </button>

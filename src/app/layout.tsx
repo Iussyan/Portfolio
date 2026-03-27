@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { SystemPath } from "@/components/layout/SystemPath";
 import { TerminalWidget } from "@/components/layout/TerminalWidget";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { AchievementProvider } from "@/components/providers/AchievementProvider";
 import { ThemeTransition } from "@/components/ui/ThemeTransition";
 
 const inter = Inter({
@@ -40,15 +41,17 @@ export default function RootLayout({
     <html lang="en" className="dark h-full">
       <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans min-h-full flex flex-col antialiased bg-surface text-on-surface transition-colors duration-500`}>
         <ThemeProvider>
-          <ThemeTransition />
-          <div className="fixed inset-0 pointer-events-none z-50 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] blend-soft-light" />
-          <Navbar />
-          <main className="grow pt-14 relative">
-            <SystemPath />
-            {children}
-          </main>
-          <TerminalWidget />
-          <Footer />
+          <AchievementProvider>
+            <ThemeTransition />
+            <div className="fixed inset-0 pointer-events-none z-50 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] blend-soft-light" />
+            <Navbar />
+            <main className="grow pt-14 relative">
+              <SystemPath />
+              {children}
+            </main>
+            <TerminalWidget />
+            <Footer />
+          </AchievementProvider>
         </ThemeProvider>
       </body>
     </html>

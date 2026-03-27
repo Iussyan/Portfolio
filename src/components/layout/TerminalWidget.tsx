@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { tacticalAudio } from "@/lib/sounds";
 import { TargetScannerGame } from "../ui/TargetScannerGame";
 import { useTheme } from "../providers/ThemeProvider";
+import { useAchievement } from "../providers/AchievementProvider";
 
 type LogEntry = {
   type: "command" | "output" | "error" | "info";
@@ -40,6 +41,7 @@ export function TerminalWidget() {
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
   const router = useRouter();
   const hasBooted = useRef(false);
+  const { achievements } = useAchievement();
 
   const addLog = useCallback((type: LogEntry["type"], content: string | React.ReactNode) => {
     const timestamp = typeof window !== "undefined"
@@ -129,11 +131,14 @@ export function TerminalWidget() {
             <span className="text-secondary">- WHOAMI: OPERATOR IDENTITY</span>
             <span className="text-secondary">- LS: DIRECTORY LISTING</span>
             <span className="text-secondary">- ARCHIVES: OPERATIONAL LOGS</span>
-            <span className="text-secondary">- EXPEDITIONS: ACHIEVEMENTS & CERTS</span>
-            <span className="text-secondary">- TERMINAL: REDIRECT TO TERMINAL</span>
+            <span className="text-secondary">- EXPEDITIONS: ARCHIVE_METADATA</span>
+            <span className="text-secondary">- ACHIEVEMENTS: VIEW_UNLOCKED_INTEL</span>
+            <span className="text-secondary">- CONTACT: INITIATE_COMMS</span>
+            <span className="text-secondary">- SOCIALS: EXTERNAL_UPLINKS</span>
+            <span className="text-secondary">- TERMINAL: REDIRECT TO HOME</span>
             <span className="text-secondary">- CD [DIR]: NAVIGATION (OPERATOR, MISSIONS, EXPEDITIONS, COMMS)</span>
             <span className="text-secondary">- SYSINFO: SYSTEM TELEMETRY</span>
-            <span className="text-secondary">- FULLSCREEN: TOGGLE DISPLAY MODE</span>
+            <span className="text-secondary">- REBOOT: HARD_RESTART</span>
             <span className="text-secondary">- CLEAR: PURGE BUFFER</span>
             <span className="text-secondary">- CLOSE: MINIMIZE MODULE</span>
             <div className="mt-3 flex flex-col gap-1 border-t border-primary/20 pt-2 opacity-60">
@@ -248,15 +253,55 @@ export function TerminalWidget() {
         tacticalAudio?.comms();
         break;
       case "cd comms":
+      case "contact":
         router.push("/contact");
         addLog("info", "RE-ROUTING_TO: Comms");
         tacticalAudio?.comms();
+        break;
+      case "socials":
+        addLog("output", "UPLINK_ESTABLISHED // SOCIAL_NODES:");
+        addLog("output", "- GITHUB: https://github.com/iussyan");
+        addLog("output", "- LINKEDIN: https://linkedin.com/in/iussyan");
+        addLog("output", "- X: https://x.com/iussyan");
+        break;
+      case "reboot":
+      case "restart":
+        addLog("info", "INITIATING_SYSTEM_REBOOT...");
+        setTimeout(() => window.location.reload(), 1500);
         break;
       case "expeditions":
       case "cd expeditions":
         router.push("/expeditions");
         addLog("info", "RE-ROUTING_TO: Expeditions");
         tacticalAudio?.comms();
+        break;
+      case "achievements":
+        {
+          const unlockedCount = achievements.filter(a => a.unlockedAt).length;
+          addLog("info", (
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between items-center border-b border-primary/20 pb-1">
+                <span className="text-primary font-black tracking-widest uppercase">ACHIEVEMENT_LOG</span>
+                <span className="text-secondary font-bold">[{unlockedCount}/{achievements.length}]_UNLOCKED</span>
+              </div>
+              <div className="flex flex-col gap-3 mt-1">
+                {achievements.map(a => (
+                  <div key={a.id} className={cn("flex flex-col gap-0.5", a.unlockedAt ? "opacity-100" : "opacity-30")}>
+                    <div className="flex items-center gap-2">
+                      <div className={cn("w-1.5 h-1.5", a.unlockedAt ? "bg-secondary" : "bg-outline/40")} />
+                      <span className={cn("text-[11px] font-black tracking-wider uppercase", a.unlockedAt ? "text-secondary" : "text-on-surface-muted")}>
+                        {a.title} {a.unlockedAt ? "✓" : ""}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-on-surface-muted leading-tight pl-3.5 normal-case font-sans italic">
+                      {a.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ));
+        }
         break;
       default:
         addLog("error", `COMMAND_NOT_RECOGNIZED: '${cmd}'. TYPE 'HELP'.`);
