@@ -19,22 +19,25 @@ const INITIAL_ACHIEVEMENTS: Achievement[] = [
 ];
 
 export function useAchievements() {
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
-  const [newlyUnlocked, setNewlyUnlocked] = useState<Achievement | null>(null);
-
-  useEffect(() => {
+  const [achievements, setAchievements] = useState<Achievement[]>(() => {
+    if (typeof window === "undefined") return INITIAL_ACHIEVEMENTS;
+    
     const stored = localStorage.getItem("silvano_achievements");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setAchievements(parsed);
-      } catch (e) {
-        setAchievements(INITIAL_ACHIEVEMENTS);
-      }
-    } else {
-      setAchievements(INITIAL_ACHIEVEMENTS);
+    if (!stored) return INITIAL_ACHIEVEMENTS;
+    
+    try {
+      const parsed: Achievement[] = JSON.parse(stored);
+      // Merge INITIAL_ACHIEVEMENTS with stored data to catch any new achievements
+      // while preserving the unlockedStatus of existing ones.
+      return INITIAL_ACHIEVEMENTS.map(initial => {
+        const found = parsed.find(p => p.id === initial.id);
+        return found ? { ...initial, unlockedAt: found.unlockedAt } : initial;
+      });
+    } catch (e) {
+      return INITIAL_ACHIEVEMENTS;
     }
-  }, []);
+  });
+  const [newlyUnlocked, setNewlyUnlocked] = useState<Achievement | null>(null);
 
   // Sync to localStorage when achievements change
   useEffect(() => {
@@ -49,13 +52,7 @@ export function useAchievements() {
       if (index === -1 || prev[index].unlockedAt) return prev;
 
       const updated = [...prev];
-      const newlyUnlockedAch = { ...updated[index], unlockedAt: new Date().toISOString() };
-      updated[index] = newlyUnlockedAch;
-      
-      // We set newlyUnlocked here, it's safer as it's not nested in a complex way 
-      // but still we'll move it out of the return if possible.
-      // Actually, setting another state during a state update is allowed if it's not circular,
-      // but let's use the effect approach.
+      updated[index] = { ...updated[index], unlockedAt: new Date().toISOString() };
       return updated;
     });
   }, []);

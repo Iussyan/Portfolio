@@ -9,9 +9,13 @@ export function useVisitorCount() {
   useEffect(() => {
     if (!supabase) return;
 
-    // 1. Increment count on mount (once per session ideally, but for "live" feel let's just trigger it)
+    // 1. Increment count on mount (once per session to avoid refresh-spam)
     const increment = async () => {
+      const hasIndexed = sessionStorage.getItem("silvano_visitor_indexed");
+      if (hasIndexed) return;
+
       await supabase.rpc('increment_visitor_count');
+      sessionStorage.setItem("silvano_visitor_indexed", "true");
     };
 
     // 2. Fetch initial count
