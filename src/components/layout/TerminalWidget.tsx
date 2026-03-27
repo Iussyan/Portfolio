@@ -25,6 +25,16 @@ const INITIAL_BOOT_LOGS = [
   "TYPE 'HELP' FOR LIST OF AVAILABLE COMMANDS."
 ];
 
+const TERMINAL_SHORTCUTS = [
+  { label: "HELP", cmd: "help" },
+  { label: "LS", cmd: "ls" },
+  { label: "SYS", cmd: "sysinfo" },
+  { label: "LOGS", cmd: "archives" },
+  { label: "MISSIONS", cmd: "cd missions" },
+  { label: "CONTACT", cmd: "contact" },
+  { label: "CLEAR", cmd: "clear" },
+];
+
 export function TerminalWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -381,7 +391,7 @@ export function TerminalWidget() {
 
   const getTerminalHeight = () => {
     if (isFullscreen) return "100dvh";
-    if (isMobile) return `calc(100dvh - 80px)`;
+    if (isMobile) return `calc(100dvh - 120px)`; // Increased clearance for mobile keyboard/shortcuts
     if (windowSize.width < 1024) return Math.min(windowSize.height - 80, 500);
     return 500;
   };
@@ -457,8 +467,8 @@ export function TerminalWidget() {
             data-terminal-widget="expanded"
           >
             {/* Header */}
-            <div className="border-b border-primary/20 p-3 flex justify-between items-center text-[10px] font-bold tracking-widest text-primary/60 bg-surface-medium shrink-0">
-              <div className="flex items-center gap-3">
+            <div className="border-b border-primary/20 p-2 sm:p-3 flex justify-between items-center text-[10px] font-bold tracking-widest text-primary/60 bg-surface-medium shrink-0">
+              <div className="flex items-center gap-3 pl-1">
                 <Command size={14} className="text-secondary" />
                 <span className="hidden sm:inline">IUSSYAN_CONSOLE // v1.0.4</span>
                 <span className="sm:hidden text-primary animate-pulse">LIVE_SESSION</span>
@@ -469,10 +479,10 @@ export function TerminalWidget() {
                     setIsFullscreen(!isFullscreen);
                     tacticalAudio?.click();
                   }}
-                  className="p-1.5 hover:bg-surface-high text-on-surface-muted hover:text-primary transition-colors"
+                  className="p-2 sm:p-1.5 hover:bg-surface-high text-on-surface-muted hover:text-primary transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
                   title="TOGGLE_FULLSCREEN"
                 >
-                  {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                  {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
                 </button>
                 <button
                   onClick={() => {
@@ -480,10 +490,10 @@ export function TerminalWidget() {
                     setIsFullscreen(false);
                     tacticalAudio?.click();
                   }}
-                  className="p-1.5 hover:bg-surface-high text-on-surface-muted hover:text-tertiary transition-colors"
+                  className="p-2 sm:p-1.5 hover:bg-surface-high text-on-surface-muted hover:text-tertiary transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
                   title="CLOSE"
                 >
-                  <X size={16} />
+                  <X size={18} />
                 </button>
               </div>
             </div>
@@ -516,10 +526,11 @@ export function TerminalWidget() {
                 <input
                   ref={inputRef}
                   type={isAuthing ? "password" : "text"}
-                  className="flex-1 bg-transparent border-none outline-none text-on-surface font-mono text-sm caret-primary focus:ring-0 p-0"
+                  className="flex-1 bg-transparent border-none outline-none text-on-surface font-mono text-base sm:text-sm caret-primary focus:ring-0 p-0"
                   autoFocus
                   spellCheck={false}
                   autoComplete="off"
+                  enterKeyHint="send"
                   value={input}
                   onChange={(e) => {
                     setInput(e.target.value);
@@ -529,6 +540,24 @@ export function TerminalWidget() {
                 />
               </div>
             </div>
+
+            {/* Tactical Shortcut Bar (Mobile Only) */}
+            {isMobile && (
+              <div className="flex items-center gap-2 overflow-x-auto p-2 bg-surface-medium border-t border-primary/10 no-scrollbar shrink-0">
+                {TERMINAL_SHORTCUTS.map((shortcut) => (
+                  <button
+                    key={shortcut.label}
+                    onClick={() => {
+                      handleCommand(shortcut.cmd);
+                      tacticalAudio?.success();
+                    }}
+                    className="whitespace-nowrap bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-none text-[10px] font-black text-primary hover:bg-primary/20 active:bg-primary/30 transition-all uppercase tracking-widest"
+                  >
+                    {shortcut.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Footer */}
             <div className="border-t border-primary/10 p-2 bg-surface-low text-[9px] font-bold text-cyan-400 uppercase tracking-tighter flex justify-between items-center px-4 shrink-0">
