@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { Activity, ArrowDown, ArrowUpRight, ChevronRight, Mail, Shield, Terminal, User } from "lucide-react";
 import { TacticalModal } from "@/components/ui/TacticalModal";
@@ -75,8 +75,6 @@ export default function Home() {
     };
   }, []);
   const [activeModal, setActiveModal] = useState<{ title: string; subtitle?: string; content: React.ReactNode } | null>(null);
-  const [isBooted, setIsBooted] = useState(false);
-  const [bootLogs, setBootLogs] = useState<string[]>([]);
   const [titleIndex, setTitleIndex] = useState(0);
   const [currentTitle, setCurrentTitle] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -86,54 +84,9 @@ export default function Home() {
     setMounted(true);
   }, []);
 
+
   useEffect(() => {
     if (!mounted) return;
-
-    const logs = [
-      "SEARCHING_FOR_SATELLITE_UPLINK...",
-      "ESTABLISHING_SECURE_CONNECTION [0x8F4]...",
-      "LOADING_OPERATOR_DOSSIER...",
-      "VERIFYING_BIO_METRIC_DATA...",
-      "HUD_STABILITY_CHECK: OK",
-      "SYSTEM_READY."
-    ];
-
-    let current = 0;
-    let isActive = true;
-
-    const runBoot = () => {
-      if (!isActive) return;
-      if (current < logs.length) {
-        setBootLogs(prev => [...prev, logs[current]]);
-        try {
-          tacticalAudio?.blip();
-        } catch (e) { }
-        current++;
-        setTimeout(runBoot, 300 + Math.random() * 300);
-      } else {
-        setTimeout(() => {
-          if (isActive) setIsBooted(true);
-        }, 500);
-      }
-    };
-
-    // Initial delay before logs start
-    const startTimer = setTimeout(runBoot, 800);
-
-    // Fail-safe: Always boot after 5 seconds regardless of animation state
-    const forceBoot = setTimeout(() => {
-      if (isActive) setIsBooted(true);
-    }, 5000);
-
-    return () => {
-      isActive = false;
-      clearTimeout(startTimer);
-      clearTimeout(forceBoot);
-    };
-  }, [mounted]);
-
-  useEffect(() => {
-    if (!isBooted) return;
 
     const timeout = setTimeout(() => {
       const fullText = TITLES[titleIndex];
@@ -156,7 +109,7 @@ export default function Home() {
     }, isDeleting ? 30 : 80);
 
     return () => clearTimeout(timeout);
-  }, [currentTitle, isDeleting, titleIndex, isBooted]);
+  }, [currentTitle, isDeleting, titleIndex, mounted]);
 
   const openSkillModal = (skill: typeof Skills[0]) => {
     setActiveModal({
@@ -327,49 +280,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen pt-4 pb-12 px-6 scanlines relative">
-      <AnimatePresence>
-        {!isBooted && (
-          <motion.div
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className={cn(
-              "boot-overlay",
-              isBooted ? "pointer-events-none opacity-0" : "pointer-events-auto opacity-100"
-            )}
-            style={{ zIndex: isBooted ? 50 : 2000 }}
-          >
-            <div className="max-w-md w-full flex flex-col gap-2">
-              <div className="flex items-center gap-3 text-primary mb-4">
-                <Terminal className="animate-pulse" />
-                <span className="text-sm font-bold tracking-[0.3em]">IUSSYAN_BIOS_V1.0</span>
-              </div>
-              {bootLogs.map((log, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="text-xs text-on-surface-muted italic"
-                >
-                  {">"} {log}
-                </motion.div>
-              ))}
-              <div className="mt-8 h-1 bg-surface-high relative overflow-hidden">
-                <motion.div
-                  className="absolute inset-0 bg-primary"
-                  initial={{ width: 0 }}
-                  animate={{ width: "100%" }}
-                  transition={{ duration: 2.5, ease: "linear" }}
-                />
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <motion.div
         initial={{ opacity: 0 }}
-        animate={{ opacity: isBooted ? 1 : 0 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
         className="container mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 mt-14 lg:mt-0"
       >
 

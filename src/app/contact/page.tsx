@@ -18,7 +18,7 @@ export default function Contact() {
   const [activeModal, setActiveModal] = useState<{ title: string; subtitle?: string; content: React.ReactNode } | null>(null);
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackText, setFeedbackText] = useState("");
-  
+
   // Form State
   const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,7 +39,6 @@ export default function Contact() {
     message: "",
   });
 
-  // Play comms sound on load
   useEffect(() => {
     tacticalAudio?.comms();
   }, []);
@@ -175,13 +174,13 @@ export default function Contact() {
             variants={fadeUp(0.1)}
             initial="initial"
             animate="animate"
-            className="lg:col-span-8 lg:col-start-5 order-1 bg-surface-medium border-l-4 border-primary p-6 flex flex-col sm:flex-row items-center gap-6 relative overflow-hidden group"
+            className="lg:col-span-8 lg:col-start-5 order-1 bg-surface-medium border-l-4 border-primary p-5 sm:p-6 flex flex-col sm:flex-row items-center sm:items-start gap-6 relative overflow-hidden group"
           >
             <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 -rotate-45 translate-x-12 -translate-y-12 group-hover:bg-primary/10 transition-colors" />
 
             <div className="w-24 h-24 bg-surface-high border-2 border-primary/20 flex items-center justify-center shrink-0 relative">
-              <motion.img
-                src="/assets/profile/operator.jfif"
+              <img
+                src="/assets/profile/operator.jpeg"
                 alt="Operator Profile"
                 className="w-full h-full object-cover"
               />
@@ -189,17 +188,17 @@ export default function Contact() {
               <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-primary animate-pulse" />
             </div>
 
-            <div className="flex-1 flex flex-col gap-2 text-center sm:text-left">
+            <div className="flex-1 flex flex-col gap-3 text-center sm:text-left">
               <div className="flex flex-col">
-                <span className="text-[10px] font-mono font-bold text-primary tracking-widest uppercase mb-1">IDENTITY_VERIFIED // IUSSYAN.TECH</span>
-                <h3 className="text-2xl font-black tracking-tighter uppercase italic text-on-surface">SILVANO, JULIUS JR. K.</h3>
+                <span className="text-[9px] sm:text-[10px] font-mono font-bold text-primary tracking-widest uppercase mb-1">IDENTITY_VERIFIED // IUSSYAN.TECH</span>
+                <h3 className="text-xl sm:text-2xl font-black tracking-tighter uppercase italic text-on-surface">SILVANO, JULIUS JR. K.</h3>
               </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 justify-center sm:justify-start">
-                <div className="flex items-center gap-1.5 text-[10px] font-mono text-on-surface-muted italic">
+              <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center sm:justify-start">
+                <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-mono text-on-surface-muted italic">
                   <div className="w-1 h-1 bg-secondary rounded-full" />
                   ROLE: FULLSTACK_DEVELOPER
                 </div>
-                <div className="flex items-center gap-1.5 text-[10px] font-mono text-on-surface-muted italic">
+                <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-mono text-on-surface-muted italic">
                   <div className="w-1 h-1 bg-secondary rounded-full" />
                   SECTOR: QC_PHILIPPINES
                 </div>
@@ -210,7 +209,7 @@ export default function Contact() {
               href="/assets/profile/business_card.png"
               download="SILVANO_DIGITAL_BUSINESS_CARD.png"
               onClick={() => tacticalAudio?.success()}
-              className="btn-tactical btn-tactical-secondary px-6 flex items-center gap-2 group/btn"
+              className="btn-tactical btn-tactical-secondary px-6 py-3 sm:py-2 flex items-center gap-2 group/btn select-none touch-manipulation w-full sm:w-auto"
             >
               <Download size={16} className="group-hover/btn:translate-y-0.5 transition-transform" />
               <span className="text-[10px] font-black tracking-[0.2em]">EXPORT_IDENTITY_NODE</span>
@@ -329,15 +328,15 @@ export default function Contact() {
                     disabled={isFeedbackSubmitting || feedbackRating === 0}
                     className="btn-tactical btn-tactical-primary py-2 text-[10px] font-black tracking-widest disabled:opacity-50 relative overflow-hidden"
                   >
-                    {isFeedbackSubmitting ? "PROCESSING_DATA..." : 
-                     feedbackStatus === 'SUCCESS' ? "REPORT_STORED" : 
-                     feedbackStatus === 'ERROR' ? "UPLINK_FAILED" : "SUBMIT_REPORT"}
+                    {isFeedbackSubmitting ? "PROCESSING_DATA..." :
+                      feedbackStatus === 'SUCCESS' ? "REPORT_STORED" :
+                        feedbackStatus === 'ERROR' ? "UPLINK_FAILED" : "SUBMIT_REPORT"}
                     {isFeedbackSubmitting && (
-                       <motion.div 
-                         className="absolute inset-0 bg-primary/20"
-                         animate={{ x: ["-100%", "100%"] }}
-                         transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                       />
+                      <motion.div
+                        className="absolute inset-0 bg-primary/20"
+                        animate={{ x: ["-100%", "100%"] }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                      />
                     )}
                   </button>
                 </div>
@@ -467,35 +466,35 @@ export default function Contact() {
                   <div className="hidden sm:flex flex-col gap-0.5 opacity-30 select-none">
                     <span className={cn(
                       "text-[8px] font-mono font-bold tracking-[0.3em] uppercase",
-                      submitStatus === 'SUCCESS' ? "text-secondary" : 
-                      submitStatus === 'ERROR' ? "text-tertiary" : "text-on-surface-muted"
+                      submitStatus === 'SUCCESS' ? "text-secondary" :
+                        submitStatus === 'ERROR' ? "text-tertiary" : "text-on-surface-muted"
                     )}>
-                      {submitStatus === 'SUCCESS' ? "TRANSMISSION_SUCCESSFUL" : 
-                       submitStatus === 'ERROR' ? "TRANSMISSION_FAILED" : "SYSTEM_READY"}
+                      {submitStatus === 'SUCCESS' ? "TRANSMISSION_SUCCESSFUL" :
+                        submitStatus === 'ERROR' ? "TRANSMISSION_FAILED" : "SYSTEM_READY"}
                     </span>
                     <div className="flex gap-1">
                       {[1, 2, 3, 4, 5, 6].map(i => (
-                        <div 
-                          key={i} 
+                        <div
+                          key={i}
                           className={cn(
                             "w-1.5 h-1.5 transition-colors duration-500",
-                            submitStatus === 'SUCCESS' ? "bg-secondary" : 
-                            submitStatus === 'ERROR' ? "bg-tertiary" : "bg-primary/40"
-                          )} 
+                            submitStatus === 'SUCCESS' ? "bg-secondary" :
+                              submitStatus === 'ERROR' ? "bg-tertiary" : "bg-primary/40"
+                          )}
                         />
                       ))}
                     </div>
                   </div>
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     disabled={isSubmitting}
                     className="btn-tactical btn-tactical-primary group flex items-center gap-3 px-8 h-12 disabled:opacity-50 relative overflow-hidden"
                   >
                     <div className="flex flex-col items-start leading-none">
                       <span className="text-xs font-black uppercase tracking-widest">
-                        {isSubmitting ? "TRANSMITTING..." : 
-                         submitStatus === 'SUCCESS' ? "UPLINK_COMPLETE" : 
-                         submitStatus === 'ERROR' ? "RETRY_UPLINK" : "SEND MESSAGE"}
+                        {isSubmitting ? "TRANSMITTING..." :
+                          submitStatus === 'SUCCESS' ? "UPLINK_COMPLETE" :
+                            submitStatus === 'ERROR' ? "RETRY_UPLINK" : "SEND MESSAGE"}
                       </span>
                       <span className="text-[8px] font-mono opacity-50 uppercase tracking-tighter">
                         {isSubmitting ? "DUMPING_PACKETS" : "INIT_UPLINK"}
@@ -506,11 +505,11 @@ export default function Contact() {
                       isSubmitting ? "animate-pulse" : "group-hover:translate-x-1 group-hover:-translate-y-1"
                     )} />
                     {isSubmitting && (
-                       <motion.div 
-                         className="absolute inset-0 bg-primary/10"
-                         animate={{ x: ["-100%", "100%"] }}
-                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                       />
+                      <motion.div
+                        className="absolute inset-0 bg-primary/10"
+                        animate={{ x: ["-100%", "100%"] }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      />
                     )}
                   </button>
                 </div>

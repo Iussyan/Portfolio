@@ -39,21 +39,22 @@ export function TacticalModal({ isOpen, onClose, title, subtitle, children }: Mo
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-100 bg-surface/90 backdrop-blur-md"
+            className="fixed inset-0 z-2000 bg-surface/40 backdrop-blur-sm"
             aria-hidden="true"
           />
 
           {/* Scrolling Container */}
-          <div 
-            className="fixed inset-0 z-101 overflow-y-auto overflow-x-hidden p-4 sm:p-8 flex items-start justify-center cursor-zoom-out"
+          <div
+            className="fixed inset-0 z-2001 overflow-y-auto overflow-x-hidden px-4 sm:px-8 pb-8 flex items-start justify-center cursor-zoom-out"
             onClick={onClose}
           >
-            {/* Modal Card wrapper - flex ensures min-height centering if needed */}
-            <div className="min-h-full flex items-center justify-center w-full max-w-4xl py-8">
+            {/* Modal Card wrapper - Precisely aligned below SystemPath bar */}
+            <div className="min-h-full flex items-start justify-center w-full max-w-4xl ">
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 30 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 30 }}
+                initial={{ opacity: 0, scaleY: 0, originY: 0 }}
+                animate={{ opacity: 1, scaleY: 1, originY: 0 }}
+                exit={{ opacity: 0, scaleY: 0.8 }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                 className="w-full bg-surface-medium border border-primary/20 relative pointer-events-auto flex flex-col shadow-2xl shadow-primary/10 cursor-default"
                 onClick={(e) => e.stopPropagation()}
                 role="dialog"

@@ -180,7 +180,7 @@ export const TargetScannerGame = () => {
     tacticalAudio?.comms();
   };
 
-  const handleShoot = (e: React.MouseEvent | React.TouchEvent, asteroidId: number) => {
+  const handleShoot = (e: React.PointerEvent, asteroidId: number) => {
     e.stopPropagation();
     if (gameState !== "playing") return;
 
@@ -240,8 +240,7 @@ export const TargetScannerGame = () => {
               marginTop: -asteroid.size / 2,
               transform: `rotate(${asteroid.rotation}deg)`
             }}
-            onMouseDown={(e) => handleShoot(e, asteroid.id)}
-            onTouchStart={(e) => handleShoot(e, asteroid.id)}
+            onPointerDown={(e) => handleShoot(e, asteroid.id)}
           >
             {/* Asteroid Visual (Tactical HUD style) */}
             <div className={`w-full h-full border-2 flex items-center justify-center transition-colors ${asteroid.type === "FAST" ? "border-secondary/60 bg-secondary/5 hover:bg-secondary/20" :

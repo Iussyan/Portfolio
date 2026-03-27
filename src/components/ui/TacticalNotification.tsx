@@ -66,11 +66,11 @@ export function TacticalNotification({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ opacity: 0, x: 100, scale: 0.9 }}
-          animate={{ opacity: 1, x: 0, scale: 1 }}
-          exit={{ opacity: 0, x: 20, scale: 0.95 }}
+          initial={{ opacity: 0, y: -20, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -20, scale: 0.95 }}
           className={cn(
-            "fixed top-20 right-6 z-200 w-80 font-mono border-l-4 shadow-2xl overflow-hidden",
+            "fixed top-22 left-1/2 -translate-x-1/2 z-2002 w-80 font-mono border-l-4 shadow-2xl overflow-hidden",
             config.borderColor,
             config.bgColor,
             "backdrop-blur-md border border-t-outline/10 border-b-outline/10 border-r-outline/10"
