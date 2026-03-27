@@ -40,20 +40,15 @@ export default function AdminDashboard() {
   const [isSaving, setIsSaving] = useState(false);
 
   // Notification State
-  const [notification, setNotification] = useState<{
-    isOpen: boolean;
-    type: NotificationType;
-    title: string;
-    message: string;
-  }>({
-    isOpen: false,
-    type: "INFO",
-    title: "",
-    message: "",
-  });
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   const showNotification = (type: NotificationType, title: string, message: string) => {
-    setNotification({ isOpen: true, type, title, message });
+    const id = Math.random().toString(36).substring(2, 9);
+    setNotifications(prev => [...prev, { id, type, title, message }]);
+  };
+
+  const removeNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
   // Admin Modal State
@@ -268,9 +263,9 @@ export default function AdminDashboard() {
     if (!adminModal.data) return;
     const { email, subject } = adminModal.data;
     const body = encodeURIComponent(replyContent);
-    const mailtoUrl = `mailto:${email}?subject=Re: ${subject}&body=${body}`;
-    window.location.href = mailtoUrl;
-    showNotification("SUCCESS", "UPLINK_ESTABLISHED", "REDIRECTING_TO_MAIL_CLIENT");
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=RE: ${encodeURIComponent(subject)}&body=${body}`;
+    window.open(gmailUrl, '_blank');
+    showNotification("SUCCESS", "UPLINK_ESTABLISHED", "REDIRECTING_TO_GMAIL_COMPOSE_INTERFACE");
     closeAdminModal();
   };
 
@@ -780,14 +775,21 @@ export default function AdminDashboard() {
          OVERRIDE_MODE_ACTIVE
       </div>
 
-      {/* Tactical Notifications */}
-      <TacticalNotification 
-        isOpen={notification.isOpen}
-        onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
-        type={notification.type}
-        title={notification.title}
-        message={notification.message}
-      />
+      {/* Tactical Notifications Stack */}
+      <div className="fixed top-6 right-6 z-2002 flex flex-col gap-3 pointer-events-none">
+        <AnimatePresence>
+          {notifications.map((n) => (
+            <TacticalNotification 
+              key={n.id}
+              isOpen={true}
+              onClose={() => removeNotification(n.id)}
+              type={n.type}
+              title={n.title}
+              message={n.message}
+            />
+          ))}
+        </AnimatePresence>
+      </div>
 
       <TacticalModal
         isOpen={adminModal.isOpen}

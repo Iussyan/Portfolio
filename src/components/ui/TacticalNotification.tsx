@@ -14,6 +14,7 @@ interface TacticalNotificationProps {
   title: string;
   message: string;
   duration?: number;
+  className?: string; // Add className for custom positioning
 }
 
 export function TacticalNotification({
@@ -23,6 +24,7 @@ export function TacticalNotification({
   title,
   message,
   duration = 5000,
+  className,
 }: TacticalNotificationProps) {
   useEffect(() => {
     if (isOpen && duration > 0) {
@@ -63,17 +65,19 @@ export function TacticalNotification({
   }[type];
 
   return (
-    <AnimatePresence>
+    <>
       {isOpen && (
         <motion.div
-          initial={{ opacity: 0, y: -20, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -20, scale: 0.95 }}
+          layout
+          initial={{ opacity: 0, x: 20, scale: 0.95 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
           className={cn(
-            "fixed top-22 left-1/2 -translate-x-1/2 z-2002 w-80 font-mono border-l-4 shadow-2xl overflow-hidden",
+            "z-2002 w-80 font-mono border-l-4 shadow-2xl overflow-hidden pointer-events-auto",
             config.borderColor,
             config.bgColor,
-            "backdrop-blur-md border border-t-outline/10 border-b-outline/10 border-r-outline/10"
+            "backdrop-blur-md border border-t-outline/10 border-b-outline/10 border-r-outline/10",
+            className
           )}
         >
           {/* Progress Bar */}
@@ -113,6 +117,6 @@ export function TacticalNotification({
           <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-outline/20" />
         </motion.div>
       )}
-    </AnimatePresence>
+    </>
   );
 }
