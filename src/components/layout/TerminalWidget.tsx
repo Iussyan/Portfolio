@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { tacticalAudio } from "@/lib/sounds";
 import { TargetScannerGame } from "../ui/TargetScannerGame";
+import { useTheme } from "../providers/ThemeProvider";
 
 type LogEntry = {
   type: "command" | "output" | "error" | "info";
@@ -27,8 +28,10 @@ export function TerminalWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isHacked, setIsHacked] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [input, setInput] = useState("");
+  const [isAuthing, setIsAuthing] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [historyIdx, setHistoryIdx] = useState(-1);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -125,6 +128,7 @@ export function TerminalWidget() {
             <span className="text-primary font-bold">AVAILABLE_COMMANDS:</span>
             <span className="text-secondary">- WHOAMI: OPERATOR IDENTITY</span>
             <span className="text-secondary">- LS: DIRECTORY LISTING</span>
+            <span className="text-secondary">- ARCHIVES: OPERATIONAL LOGS</span>
             <span className="text-secondary">- EXPEDITIONS: ACHIEVEMENTS & CERTS</span>
             <span className="text-secondary">- TERMINAL: REDIRECT TO TERMINAL</span>
             <span className="text-secondary">- CD [DIR]: NAVIGATION (OPERATOR, MISSIONS, EXPEDITIONS, COMMS)</span>
@@ -149,10 +153,20 @@ export function TerminalWidget() {
       case "clear":
         setLogs([]);
         break;
+      case "admin":
+        router.push("/admin");
+        break;
       case "whoami":
-        addLog("output", "IDENTITY: SILVANO, JULIUS JR. K. // OPERATOR_01");
-        addLog("output", "CODENAME: IUSSYAN // IUSSYAN.TECH");
-        addLog("output", "SECTOR: ASIA_PH // FULL_STACK_DEVELOPER");
+        {
+          const birthDate = new Date("2005-06-21");
+          const age = Math.floor((new Date().getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+          
+          addLog("output", "IDENTITY: SILVANO, JULIUS JR. K. // OPERATOR_01");
+          addLog("output", "CODENAME: IUSSYAN // IUSSYAN.TECH");
+          addLog("output", `BIRTHDAY: 2005.06.21 // AGE: ${age}`);
+          addLog("output", "SEX: MALE // XY_CHROMOSOME_VERIFIED");
+          addLog("output", "SECTOR: ASIA_PH // FULL_STACK_DEVELOPER");
+        }
         break;
       case "ls":
         addLog("output", "DIR: /ROOT/OPERATOR\nDIR: /ROOT/MISSIONS\nDIR: /ROOT/EXPEDITIONS\nDIR: /ROOT/COMMS");
@@ -173,8 +187,10 @@ export function TerminalWidget() {
       // EASTER EGGS
       case "override":
       case "abort":
-        addLog("error", "PROTOCOL OVERRIDE DENIED. BIOMETRIC SIGNATURE MISMATCH.");
-        tacticalAudio?.error();
+      case "restore":
+      case "system_restore":
+        toggleTheme();
+        addLog("info", `INITIATING_SYSTEM_SHIFT... THEME_SHIFT_TO: ${theme === 'tactical' ? 'PROFESSIONAL' : 'TACTICAL'}`);
         break;
       case "classified":
       case "topsecret":
@@ -210,6 +226,12 @@ export function TerminalWidget() {
           }
         }, 200);
         break;
+      case "access_intel":
+        setIsAuthing(true);
+        addLog("info", "WARNING: ACCESSING_RESTRICTED_DATA_BANK...");
+        addLog("info", "PLEASE_ENTER_MASTER_PASSCODE:");
+        setInput("");
+        break;
       case "cd operator":
         router.push("/about");
         addLog("info", "RE-ROUTING_TO: Operator");
@@ -218,6 +240,11 @@ export function TerminalWidget() {
       case "cd missions":
         router.push("/projects");
         addLog("info", "RE-ROUTING_TO: Missions");
+        tacticalAudio?.comms();
+        break;
+      case "archives":
+        router.push("/logbook");
+        addLog("info", "RE-ROUTING_TO: Field_Logs");
         tacticalAudio?.comms();
         break;
       case "cd comms":
@@ -237,8 +264,40 @@ export function TerminalWidget() {
     }
   }, [addLog, router]);
 
-  const onKeyDown = (e: React.KeyboardEvent) => {
+  const onKeyDown = async (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
+      if (isAuthing) {
+        const passcode = input;
+        setInput("");
+        addLog("command", "********");
+
+        try {
+          const res = await fetch("/api/auth/verify", {
+            method: "POST",
+            body: JSON.stringify({ passcode }),
+            headers: { "Content-Type": "application/json" }
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            addLog("info", "AUTHENTICATION_SUCCESSFUL. REDIRECTING...");
+            localStorage.setItem("admin-session", "active");
+            tacticalAudio?.success();
+            setTimeout(() => {
+              setIsAuthing(false);
+              router.push("/admin");
+            }, 1000);
+          } else {
+            addLog("error", "AUTHENTICATION_FAILED. INVALID_ACCESS_CODE.");
+            tacticalAudio?.error();
+            setIsAuthing(false);
+          }
+        } catch (err) {
+          addLog("error", "SYSTEM_ERROR_DURING_AUTH.");
+          setIsAuthing(false);
+        }
+        return;
+      }
       handleCommand(input);
       setInput("");
     } else if (e.key === "ArrowUp") {
@@ -276,8 +335,8 @@ export function TerminalWidget() {
   };
 
   const getTerminalHeight = () => {
-    if (isFullscreen) return windowSize.height;
-    if (isMobile) return Math.min(windowSize.height * 0.7, windowSize.height - 80);
+    if (isFullscreen) return "100dvh";
+    if (isMobile) return `calc(100dvh - 80px)`;
     if (windowSize.width < 1024) return Math.min(windowSize.height - 80, 500);
     return 500;
   };
@@ -348,6 +407,7 @@ export function TerminalWidget() {
               right: isFullscreen ? 0 : edgeOffset,
               left: isFullscreen ? 0 : "auto",
               top: isFullscreen ? 0 : "auto",
+              paddingBottom: isFullscreen ? "env(safe-area-inset-bottom)" : 0,
             }}
             data-terminal-widget="expanded"
           >
@@ -393,12 +453,15 @@ export function TerminalWidget() {
                 <div key={i} className={cn(
                   "text-xs sm:text-sm leading-relaxed flex gap-3",
                   isHacked ? "text-emerald-500 font-bold drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]" :
-                    log.type === "command" ? "text-on-surface font-bold" :
+                    log.type === "command" ? (theme === "professional" ? "text-secondary font-bold" : "text-on-surface font-bold") :
                       log.type === "error" ? "text-tertiary" :
                         log.type === "info" ? "text-primary/60" :
                           "text-primary"
                 )}>
-                  <span className="opacity-20 shrink-0 select-none hidden sm:block">[{log.timestamp}]</span>
+                  <span className={cn(
+                    "shrink-0 select-none hidden sm:block",
+                    theme === "professional" ? "text-on-surface-muted/60 font-bold" : "opacity-20"
+                  )}>[{log.timestamp}]</span>
                   <div className="flex-1 whitespace-pre-wrap">{log.content}</div>
                 </div>
               ))}
@@ -407,7 +470,7 @@ export function TerminalWidget() {
                 <ChevronRight size={16} className="animate-pulse shrink-0" />
                 <input
                   ref={inputRef}
-                  type="text"
+                  type={isAuthing ? "password" : "text"}
                   className="flex-1 bg-transparent border-none outline-none text-on-surface font-mono text-sm caret-primary focus:ring-0 p-0"
                   autoFocus
                   spellCheck={false}

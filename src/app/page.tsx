@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Terminal, Activity, Shield } from "lucide-react";
-import { SystemLog } from "@/components/layout/SystemLog";
+import { Activity, ArrowDown, ArrowUpRight, ChevronRight, Mail, Shield, Terminal, User } from "lucide-react";
 import { TacticalModal } from "@/components/ui/TacticalModal";
 import { fadeUp, stagger, item } from "@/lib/animations";
 import { tacticalAudio } from "@/lib/sounds";
 import { TargetScannerGame } from "@/components/ui/TargetScannerGame";
+import { supabase } from "@/lib/supabase";
+import { useMetadata } from "@/lib/useMetadata";
+import { cn } from "@/lib/utils";
 
 const RecentActivity = [
   { id: "01", date: "2024-05-12", title: "SEEGLA // SOFTWARE ENGINEER", status: "ACTIVE" },
@@ -31,16 +33,62 @@ const TITLES = [
   "Lead Developer @ LUNA",
   "Team SEEGLA Software Engineer"
 ];
-
 export default function Home() {
+  const { metadata } = useMetadata();
+  const [logs, setLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchLatestLogs = async () => {
+      if (!supabase) return;
+      try {
+        const { data } = await supabase
+          .from('logs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(3);
+        if (data) setLogs(data);
+      } catch (err) {
+        console.error("Error fetching logs:", err);
+      }
+    };
+
+    fetchLatestLogs();
+
+    if (!supabase) return;
+
+    let channel: any;
+    try {
+      channel = supabase
+        .channel('public:home_logs')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'logs' }, () => {
+          fetchLatestLogs();
+        })
+        .subscribe();
+    } catch (err) {
+      console.error("Error setting up logs subscription:", err);
+    }
+
+    return () => {
+      if (channel && supabase) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, []);
   const [activeModal, setActiveModal] = useState<{ title: string; subtitle?: string; content: React.ReactNode } | null>(null);
   const [isBooted, setIsBooted] = useState(false);
   const [bootLogs, setBootLogs] = useState<string[]>([]);
   const [titleIndex, setTitleIndex] = useState(0);
   const [currentTitle, setCurrentTitle] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
     const logs = [
       "SEARCHING_FOR_SATELLITE_UPLINK...",
       "ESTABLISHING_SECURE_CONNECTION [0x8F4]...",
@@ -51,22 +99,38 @@ export default function Home() {
     ];
 
     let current = 0;
-    const interval = setInterval(() => {
+    let isActive = true;
+
+    const runBoot = () => {
+      if (!isActive) return;
       if (current < logs.length) {
         setBootLogs(prev => [...prev, logs[current]]);
-        tacticalAudio?.blip();
+        try {
+          tacticalAudio?.blip();
+        } catch (e) { }
         current++;
+        setTimeout(runBoot, 300 + Math.random() * 300);
       } else {
-        clearInterval(interval);
         setTimeout(() => {
-          setIsBooted(true);
-          tacticalAudio?.comms();
-        }, 800);
+          if (isActive) setIsBooted(true);
+        }, 500);
       }
-    }, 400);
+    };
 
-    return () => clearInterval(interval);
-  }, []);
+    // Initial delay before logs start
+    const startTimer = setTimeout(runBoot, 800);
+
+    // Fail-safe: Always boot after 5 seconds regardless of animation state
+    const forceBoot = setTimeout(() => {
+      if (isActive) setIsBooted(true);
+    }, 5000);
+
+    return () => {
+      isActive = false;
+      clearTimeout(startTimer);
+      clearTimeout(forceBoot);
+    };
+  }, [mounted]);
 
   useEffect(() => {
     if (!isBooted) return;
@@ -156,6 +220,111 @@ export default function Home() {
     });
   };
 
+  const openProfileModal = () => {
+    setActiveModal({
+      title: "OPERATOR_DOSSIER",
+      subtitle: `ID_REF: ${metadata.OPERATOR_ID || 'IUSSYAN-01'}`,
+      content: (
+        <div className="flex flex-col gap-8 font-mono">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="flex flex-col gap-6">
+              <div className="relative w-full aspect-square surface-high border border-primary/20 overflow-hidden">
+                <img src="/assets/profile/operator.jpeg" alt="Operator" className="w-full h-full object-cover grayscale" />
+                <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
+                <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-primary" />
+                <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-primary" />
+              </div>
+              <div className="flex flex-col gap-1 border-l-2 border-secondary pl-4">
+                <span className="text-[10px] text-secondary font-bold uppercase tracking-widest">CLEARANCE_LEVEL</span>
+                <span className="text-xl font-black">LEVEL_05 // OVERSEER</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="surface-low p-4 border-b border-primary/20">
+                  <span className="text-[9px] text-on-surface-muted font-bold uppercase block mb-1">DESIGNATION</span>
+                  <span className="text-sm font-bold truncate">SILVANO, J. JR.</span>
+                </div>
+                <div className="surface-low p-4 border-b border-primary/20">
+                  <span className="text-[9px] text-on-surface-muted font-bold uppercase block mb-1">SPECIALTY</span>
+                  <span className="text-sm font-bold uppercase">SOFTWARE_ENG</span>
+                </div>
+                <div className="surface-low p-4 border-b border-primary/20">
+                  <span className="text-[9px] text-on-surface-muted font-bold uppercase block mb-1">LOCATION</span>
+                  <span className="text-sm font-bold uppercase">REGION_PH</span>
+                </div>
+                <div className="surface-low p-4 border-b border-primary/20">
+                  <span className="text-[9px] text-on-surface-muted font-bold uppercase block mb-1">AGE // SEX</span>
+                  <span className="text-sm font-bold uppercase">20 // MALE</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 mt-2">
+                <h4 className="text-[10px] text-primary font-black tracking-[0.3em] uppercase">SYSTEM_OBJECTIVES</h4>
+                <div className="p-4 bg-surface-high border border-outline/10 text-xs leading-relaxed text-on-surface-muted italic">
+                  Currently focused on developing secure, high-performance web architectures and immersive interface designs. 
+                  Continuous integration of next-gen technologies for tactical software deployment.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-outline/10 pt-6 flex flex-wrap gap-3">
+             {["REACT", "NEXTJS", "JAVA", "FLUTTER", "POSTGRES"].map(tag => (
+               <span key={tag} className="px-3 py-1 bg-primary/10 text-primary text-[9px] font-black tracking-widest border border-primary/20 uppercase">
+                 {tag}
+               </span>
+             ))}
+          </div>
+        </div>
+      )
+    });
+  };
+
+  const openDetailedLogModal = (log: any) => {
+    setActiveModal({
+      title: log.title,
+      subtitle: `SECTOR: ${log.sector} // TIMESTAMP: ${new Date(log.created_at).toLocaleString()}`,
+      content: (
+        <div className="flex flex-col gap-6 font-mono uppercase">
+          <div className="p-6 bg-surface-high border border-primary/20 relative">
+            <div className="absolute top-2 right-4 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+              <span className="text-[10px] text-secondary font-bold">DECODING...</span>
+            </div>
+            <p className="text-base font-bold text-on-surface leading-tight tracking-tight mb-4 lowercase first-letter:uppercase italic">
+              {log.content || "NO_ADDITIONAL_DATA_STORED_IN_MODULE."}
+            </p>
+            <div className="h-px w-full bg-outline/10 my-4" />
+            <div className="grid grid-cols-2 gap-6 text-[10px]">
+              <div className="flex flex-col gap-1">
+                <span className="text-on-surface-muted font-bold">LOG_SEQUENCE_ID</span>
+                <span className="text-primary font-bold">{log.id.substring(0, 16)}...</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-on-surface-muted font-bold">ENCRYPTION_STATUS</span>
+                <span className="text-secondary font-bold">RSA_AES_256 // VERIFIED</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <span className="text-primary/60 text-[11px] font-bold tracking-widest">TELEMETRY_STREAM</span>
+            <div className="p-4 bg-surface text-[11px] text-on-surface-muted italic flex flex-col gap-1 opacity-70">
+              <span>{`>`} RETRIEVING_REMOTE_METADATA...</span>
+              <span>{`>`} SYNCING_WITH_PRIMARY_CORE...</span>
+              <span>{`>`} INTEGRITY_CHECK: PASSED.</span>
+            </div>
+          </div>
+        </div>
+      )
+    });
+  };
+
+  // REMOVED: Hydration bottleneck that causes blank screen if mounting hangs
+  // if (!mounted) return null;
+
   return (
     <div className="min-h-screen pt-4 pb-12 px-6 scanlines relative">
       <AnimatePresence>
@@ -163,7 +332,11 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-200 bg-surface flex flex-col items-center justify-center p-8 font-mono"
+            className={cn(
+              "boot-overlay",
+              isBooted ? "pointer-events-none opacity-0" : "pointer-events-auto opacity-100"
+            )}
+            style={{ zIndex: isBooted ? 50 : 2000 }}
           >
             <div className="max-w-md w-full flex flex-col gap-2">
               <div className="flex items-center gap-3 text-primary mb-4">
@@ -196,6 +369,7 @@ export default function Home() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: isBooted ? 1 : 0 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
         className="container mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 mt-14 lg:mt-0"
       >
 
@@ -211,7 +385,16 @@ export default function Home() {
             <div className="hud-marker" />
             <h2 className="text-xs text-on-surface-muted mb-2 font-bold tracking-widest">OPERATOR_CODE // IUSSYAN</h2>
             <h1 className="text-2xl font-bold tracking-tighter text-on-surface hover:glitch-text" data-text="SILVANO, JULIUS JR. K.">SILVANO, JULIUS JR. K.</h1>
-            <p className="text-xs text-primary/60 mt-2 font-mono font-bold tracking-widest uppercase">OPERATOR_01 // TERMINAL</p>
+            <p className="text-xs text-primary/60 mt-2 font-mono font-bold tracking-widest uppercase">{metadata.OPERATOR_STATUS} // TERMINAL</p>
+
+            {/* Dynamic Mission Status */}
+            <div className="flex flex-col gap-1 mt-4 border-l border-primary/20 pl-4 py-1.5 bg-primary/5 group/mission">
+              <span className="text-[9px] font-black tracking-[0.2em] text-primary/40 uppercase group-hover/mission:text-primary/60 transition-colors">CURRENT_MISSION</span>
+              <span className="text-[11px] font-bold tracking-tighter text-on-surface uppercase italic flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
+                {metadata.CURRENT_MISSION}
+              </span>
+            </div>
           </motion.div>
 
           {/* Activity Log */}
@@ -238,25 +421,37 @@ export default function Home() {
             </div>
           </motion.div>
 
-          {/* Telemetry Chart Placeholder */}
-          <motion.div variants={item} className="surface-low p-4 aspect-video flex flex-col justify-end gap-2 overflow-hidden relative h-76 ">
-            <div className="absolute inset-0 opacity-10 pointer-events-none">
-              <svg width="100%" height="100%" viewBox="0 0 200 100">
-                <path d="M0 80 Q 25 20, 50 80 T 100 80 T 150 20 T 200 80" fill="none" stroke="currentColor" strokeWidth="1" className="text-secondary" />
-              </svg>
+          {/* Operational Logs HUD - Migrated from System Feed position */}
+          <motion.div variants={item} className="surface-low p-6 relative border-l-2 border-primary flex flex-col gap-4">
+            <div className="hud-marker" />
+            <div className="flex items-center justify-between border-b border-primary/20 pb-2">
+              <div className="flex items-center gap-2">
+                <Activity size={14} className="text-primary" />
+                <h3 className="text-sm font-bold tracking-widest text-primary uppercase">FIELD_LOGS</h3>
+              </div>
+              <Link href="/logbook" className="text-xs text-on-surface-muted hover:text-secondary flex items-center gap-1 transition-colors">
+                ARCHIVE <ChevronRight size={12} />
+              </Link>
             </div>
-            <div className="flex items-end gap-1 h-12">
-              {[40, 70, 45, 90, 65, 30, 85, 50, 75, 40].map((h, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ height: 0 }}
-                  animate={{ height: `${h}%` }}
-                  transition={{ repeat: Infinity, repeatType: "reverse", duration: 1 + (i % 5) * 0.2 }}
-                  className="flex-1 bg-secondary/40"
-                />
-              ))}
+            <div className="flex flex-col gap-px bg-outline/5 border border-outline/10 max-h-[250px] overflow-y-auto tactical-scrollbar relative group">
+              {logs.length > 0 ? logs.map((log) => (
+                <div 
+                  key={log.id} 
+                  onClick={() => openDetailedLogModal(log)}
+                  className="bg-surface-low/50 p-4 hover:bg-surface-medium transition-all group/log border-b border-outline/5 last:border-b-0 cursor-pointer"
+                >
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[10px] font-mono text-secondary tracking-widest uppercase font-bold">[{log.sector}]</span>
+                    <span className="text-[10px] text-on-surface-muted opacity-30 font-mono italic">{new Date(log.created_at).toLocaleDateString()}</span>
+                  </div>
+                  <h4 className="text-xs font-bold font-mono tracking-tight text-on-surface group-hover/log:text-primary transition-colors truncate uppercase italic leading-none">{log.title}</h4>
+                </div>
+              )) : (
+                <div className="p-6 text-xs text-on-surface-muted italic opacity-40 uppercase text-center font-mono">
+                  AWAITING_FIELD_DATA...
+                </div>
+              )}
             </div>
-            <SystemLog />
           </motion.div>
         </motion.div>
 
@@ -271,9 +466,12 @@ export default function Home() {
           <div className="relative">
             <div className="absolute -inset-8 border border-primary/20 animate-[spin_20s_linear_infinite]" />
             <div className="absolute -inset-4 border border-secondary/20 animate-[spin_15s_linear_infinite_reverse]" />
-            <div className="w-59 h-59 surface-high relative overflow-hidden flex items-center justify-center group/avatar">
+            <div 
+              onClick={openProfileModal}
+              className="w-59 h-59 surface-high relative overflow-hidden flex items-center justify-center group/avatar cursor-pointer"
+            >
               <motion.img
-                src="/assets/profile/operator.jfif"
+                src="/assets/profile/operator.jpeg"
                 alt="Operator Profile"
                 className="w-full h-full object-cover grayscale group-hover/avatar:grayscale-0 group-hover/avatar:scale-105 transition-all duration-500"
               />
@@ -283,8 +481,18 @@ export default function Home() {
                 transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
                 className="absolute left-0 right-0 h-[2px] bg-primary/40 shadow-[0_0_15px_var(--color-primary)] z-10 pointer-events-none"
               />
+              {/* Subtle Click Hint */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute bottom-4 right-4 opacity-0 group-hover/avatar:opacity-100 transition-all duration-500 translate-y-2 group-hover/avatar:translate-y-0 flex flex-col items-end gap-1">
+                  <span className="text-[9px] font-black tracking-[0.3em] text-primary/60 uppercase">DOSSIER // ACCESS</span>
+                  <div className="h-px w-12 bg-primary/30" />
+                </div>
+                <div className="absolute top-4 left-4 opacity-0 group-hover/avatar:opacity-100 transition-all duration-500 -translate-y-2 group-hover/avatar:translate-y-0">
+                  <div className="w-3 h-3 border-t border-l border-primary/40" />
+                </div>
+              </div>
             </div>
-            <div className="absolute -top-2 -right-2 bg-primary text-surface text-[11px] font-extrabold px-3 py-1 uppercase tracking-tighter">ACTIVE_LINK</div>
+            <div className="absolute -top-2 -right-2 bg-primary text-surface text-[11px] font-extrabold px-3 py-1 uppercase tracking-tighter">{metadata.OPERATOR_STATUS}_LINK</div>
           </div>
 
           <div className="flex flex-col gap-4">
@@ -361,7 +569,7 @@ export default function Home() {
           </motion.div>
 
           {/* Target Scanner UI Widget (Game) */}
-          <motion.div variants={item} className="flex flex-col gap-2">
+          <motion.div variants={item} className="flex flex-col gap-6">
             <TargetScannerGame />
           </motion.div>
         </motion.div>

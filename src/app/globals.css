@@ -32,6 +32,75 @@
   --color-outline: rgba(141, 151, 157, 0.2);
 }
 
+/* 
+ * SYSTEM OVERRIDE: Professional Theme Palette 
+ * Triggered via .theme-professional class on <html>
+ */
+.theme-professional {
+  --color-surface: #f8fafc;        /* Slate 50 - Softer than pure white */
+  --color-surface-low: #f1f5f9;    /* Slate 100 */
+  --color-surface-medium: #e2e8f0; /* Slate 200 */
+  --color-surface-high: #cbd5e1;   /* Slate 300 */
+  --color-surface-bright: #94a3b8; /* Slate 400 */
+
+  --color-primary: #1e293b;        /* Slate 800 - More professional than 900 */
+  --color-primary-dim: #475569;    /* Slate 600 */
+  --color-primary-glow: rgba(30, 41, 59, 0.05);
+
+  --color-secondary: #2563eb;      /* Deep Blue */
+  --color-secondary-dim: #3b82f6;
+  --color-secondary-glow: rgba(37, 99, 235, 0.1);
+
+  --color-tertiary: #be123c;       /* Rose 700 - Slightly classier red */
+
+  --color-on-surface: #0f172a;     /* Slate 900 */
+  --color-on-surface-muted: #64748b; /* Slate 500 */
+  --color-outline: rgba(15, 23, 42, 0.1);
+}
+
+/* Global Image Colorization for Professional Mode */
+.theme-professional img {
+  filter: grayscale(0) !important;
+  -webkit-filter: grayscale(0) !important;
+}
+
+/* Professional Mode Substance & Depth */
+.theme-professional section,
+.theme-professional .bg-surface-low,
+.theme-professional .bg-surface-high {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05); /* Subtle Slate Shadow */
+  border: 1px solid var(--color-outline) !important;
+}
+
+.theme-professional header {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.theme-professional .hud-marker {
+  opacity: 0.1; /* Hide harsh HUD markers in pro mode */
+}
+
+/* Professional Terminal Revamp */
+.theme-professional [data-terminal-widget="expanded"] {
+  background-color: var(--color-surface);
+  border-color: var(--color-primary-glow) !important;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15);
+}
+
+.theme-professional [data-terminal-widget="expanded"] .bg-surface-low,
+.theme-professional [data-terminal-widget="expanded"] .bg-surface-medium {
+  background-color: var(--color-surface-low);
+  color: var(--color-on-surface-muted);
+}
+
+.theme-professional [data-terminal-widget="expanded"] .text-cyan-400 {
+  color: var(--color-secondary) !important; /* Switch neon cyan to deep blue in pro mode */
+}
+
+.theme-professional .scanlines::before {
+  display: none;
+}
+
 @layer base {
   * {
     border-radius: 0 !important;
@@ -40,13 +109,20 @@
   html {
     scroll-behavior: smooth;
     background-color: var(--color-surface);
+    height: 100dvh;
+    @supports (-webkit-touch-callout: none) {
+      height: -webkit-fill-available;
+    }
   }
 
   body {
     background-color: var(--color-surface);
     color: var(--color-on-surface);
     font-family: var(--font-sans);
-    @apply antialiased overflow-x-hidden text-lg leading-relaxed md:text-xl md:leading-loose;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+    @apply antialiased overflow-x-hidden text-base leading-relaxed md:text-xl md:leading-loose;
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   h1,
@@ -306,5 +382,23 @@
   .scrollbar-tactical::-webkit-scrollbar-thumb:hover {
     background: var(--color-secondary-dim);
     box-shadow: 0 0 8px var(--color-secondary-glow);
+  }
+
+  /* Safari-optimized Boot Overlay */
+  .boot-overlay {
+    @apply fixed inset-0 flex flex-col items-center justify-center p-8 font-mono;
+    z-index: 2000; /* Above Navbar (1000) */
+    background-color: var(--color-surface);
+    pointer-events: auto;
+    -webkit-transform: translateZ(0); /* Force hardware acceleration in Safari */
+    transform: translateZ(0);
+    transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+  }
+
+  /* Force non-blocking state */
+  .boot-overlay.pointer-events-none {
+    pointer-events: none !important;
+    opacity: 0 !important;
+    visibility: hidden;
   }
 }

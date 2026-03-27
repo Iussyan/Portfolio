@@ -2,21 +2,132 @@
 
 import { motion } from "framer-motion";
 
+import { cn } from "@/lib/utils";
 import { Activity, Camera, Download, ExternalLink, Link, Mail, MapPin, MessageCircle, Quote, Radio, Send, Terminal, User } from "lucide-react";
 import { useState } from "react";
 import { TacticalModal } from "@/components/ui/TacticalModal";
 import { fadeUp, stagger, item } from "@/lib/animations";
 import { tacticalAudio } from "@/lib/sounds";
 import { useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { TacticalNotification, NotificationType } from "@/components/ui/TacticalNotification";
+import { useMetadata } from "@/lib/useMetadata";
 
 export default function Contact() {
+  const { metadata } = useMetadata();
   const [activeModal, setActiveModal] = useState<{ title: string; subtitle?: string; content: React.ReactNode } | null>(null);
   const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackText, setFeedbackText] = useState("");
+  
+  // Form State
+  const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFeedbackSubmitting, setIsFeedbackSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'IDLE' | 'SUCCESS' | 'ERROR'>('IDLE');
+  const [feedbackStatus, setFeedbackStatus] = useState<'IDLE' | 'SUCCESS' | 'ERROR'>('IDLE');
+
+  // Notification State
+  const [notification, setNotification] = useState<{
+    isOpen: boolean;
+    type: NotificationType;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    type: "INFO",
+    title: "",
+    message: "",
+  });
 
   // Play comms sound on load
   useEffect(() => {
     tacticalAudio?.comms();
   }, []);
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus('IDLE');
+    tacticalAudio?.click();
+
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .insert([{
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          content: formData.message
+        }]);
+
+      if (error) throw error;
+
+      setSubmitStatus('SUCCESS');
+      setFormData({ name: "", email: "", subject: "", message: "" });
+      tacticalAudio?.success();
+      setNotification({
+        isOpen: true,
+        type: "SUCCESS",
+        title: "UPLINK_ESTABLISHED",
+        message: "Your message has been successfully transmitted to the operator."
+      });
+    } catch (err) {
+      console.error(err);
+      setSubmitStatus('ERROR');
+      tacticalAudio?.error();
+      setNotification({
+        isOpen: true,
+        type: "ERROR",
+        title: "UPLINK_FAILED",
+        message: "Technical error detected. Transmission could not be completed."
+      });
+    } finally {
+      setIsSubmitting(false);
+      setTimeout(() => setSubmitStatus('IDLE'), 5000);
+    }
+  };
+
+  const handleFeedbackSubmit = async () => {
+    if (feedbackRating === 0) return;
+    setIsFeedbackSubmitting(true);
+    setFeedbackStatus('IDLE');
+    tacticalAudio?.click();
+
+    try {
+      const { error } = await supabase
+        .from('feedback')
+        .insert([{
+          rating: feedbackRating,
+          content: feedbackText
+        }]);
+
+      if (error) throw error;
+
+      setFeedbackStatus('SUCCESS');
+      setFeedbackRating(0);
+      setFeedbackText("");
+      tacticalAudio?.success();
+      setNotification({
+        isOpen: true,
+        type: "SUCCESS",
+        title: "REPORT_FILED",
+        message: "System feedback report has been indexed and stored."
+      });
+    } catch (err) {
+      console.error(err);
+      setFeedbackStatus('ERROR');
+      tacticalAudio?.error();
+      setNotification({
+        isOpen: true,
+        type: "ERROR",
+        title: "SYNC_ERROR",
+        message: "Failed to store feedback report in the central database."
+      });
+    } finally {
+      setIsFeedbackSubmitting(false);
+      setTimeout(() => setFeedbackStatus('IDLE'), 5000);
+    }
+  };
 
   const openContactModal = (node: { label: string; val: string }) => {
     setActiveModal({
@@ -120,7 +231,7 @@ export default function Contact() {
               {[
                 { icon: <Mail size={16} />, label: "EMAIL", val: "silvano.julius.kadusale@gmail.com" },
                 { icon: <MapPin size={16} />, label: "LOCATION", val: "QC_PHILIPPINES" },
-                { icon: <Terminal size={16} />, label: "AVAILABILITY", val: "ACTIVE_SYNCHRONOUS" }
+                { icon: <Terminal size={16} />, label: "AVAILABILITY", val: metadata.AVAILABILITY }
               ].map((node) => (
                 <div
                   key={node.label}
@@ -208,13 +319,26 @@ export default function Contact() {
                 <div className="flex flex-col gap-2">
                   <textarea
                     placeholder="BRIEF_SYSTEM_ANALYSIS..."
-                    className="w-full bg-surface-high border border-outline/10 p-3 text-[10px] font-mono focus:border-primary focus:outline-none transition-all placeholder:text-on-surface-muted/20 resize-none h-20 uppercase"
+                    value={feedbackText}
+                    onChange={(e) => setFeedbackText(e.target.value)}
+                    disabled={isFeedbackSubmitting}
+                    className="w-full bg-surface-high border border-outline/10 p-3 text-[10px] font-mono focus:border-primary focus:outline-none transition-all placeholder:text-on-surface-muted/20 resize-none h-20 uppercase disabled:opacity-50"
                   />
                   <button
-                    onClick={() => tacticalAudio?.success()}
-                    className="btn-tactical btn-tactical-primary py-2 text-[10px] font-black tracking-widest"
+                    onClick={handleFeedbackSubmit}
+                    disabled={isFeedbackSubmitting || feedbackRating === 0}
+                    className="btn-tactical btn-tactical-primary py-2 text-[10px] font-black tracking-widest disabled:opacity-50 relative overflow-hidden"
                   >
-                    SUBMIT_REPORT
+                    {isFeedbackSubmitting ? "PROCESSING_DATA..." : 
+                     feedbackStatus === 'SUCCESS' ? "REPORT_STORED" : 
+                     feedbackStatus === 'ERROR' ? "UPLINK_FAILED" : "SUBMIT_REPORT"}
+                    {isFeedbackSubmitting && (
+                       <motion.div 
+                         className="absolute inset-0 bg-primary/20"
+                         animate={{ x: ["-100%", "100%"] }}
+                         transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                       />
+                    )}
                   </button>
                 </div>
               </div>
@@ -256,7 +380,7 @@ export default function Contact() {
               <div className="absolute bottom-0 right-0 w-8 h-px bg-secondary/40" />
               <div className="absolute bottom-0 right-0 w-px h-8 bg-secondary/40" />
 
-              <form className="flex flex-col gap-10" onSubmit={(e) => { e.preventDefault(); tacticalAudio?.success(); }}>
+              <form className="flex flex-col gap-10" onSubmit={handleContactSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="flex flex-col gap-2 group">
                     <div className="flex items-center justify-between px-1">
@@ -268,8 +392,11 @@ export default function Contact() {
                         type="text"
                         id="name"
                         required
+                        value={formData.name}
+                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                        disabled={isSubmitting}
                         placeholder="NAME // IDENTITY"
-                        className="w-full bg-surface-high/50 border-l border-outline/20 p-4 text-sm font-mono focus:border-primary focus:bg-surface-high focus:outline-none transition-all placeholder:text-on-surface-muted/10"
+                        className="w-full bg-surface-high/50 border-l border-outline/20 p-4 text-sm font-mono focus:border-primary focus:bg-surface-high focus:outline-none transition-all placeholder:text-on-surface-muted/10 disabled:opacity-50"
                       />
                       <div className="absolute bottom-0 left-0 w-0 h-px bg-primary group-focus-within:w-full transition-all duration-300" />
                     </div>
@@ -285,8 +412,11 @@ export default function Contact() {
                         type="email"
                         id="email"
                         required
+                        value={formData.email}
+                        onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                        disabled={isSubmitting}
                         placeholder="NAME@DOMAIN.COM"
-                        className="w-full bg-surface-high/50 border-l border-outline/20 p-4 text-sm font-mono focus:border-primary focus:bg-surface-high focus:outline-none transition-all placeholder:text-on-surface-muted/10"
+                        className="w-full bg-surface-high/50 border-l border-outline/20 p-4 text-sm font-mono focus:border-primary focus:bg-surface-high focus:outline-none transition-all placeholder:text-on-surface-muted/10 disabled:opacity-50"
                       />
                       <div className="absolute bottom-0 left-0 w-0 h-px bg-primary group-focus-within:w-full transition-all duration-300" />
                     </div>
@@ -303,8 +433,11 @@ export default function Contact() {
                       type="text"
                       id="subject"
                       required
+                      value={formData.subject}
+                      onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                      disabled={isSubmitting}
                       placeholder="MISSION_QUERY // COLLABORATIVE_SYNC"
-                      className="w-full bg-surface-high/50 border-l border-outline/20 p-4 text-sm font-mono focus:border-primary focus:bg-surface-high focus:outline-none transition-all placeholder:text-on-surface-muted/10"
+                      className="w-full bg-surface-high/50 border-l border-outline/20 p-4 text-sm font-mono focus:border-primary focus:bg-surface-high focus:outline-none transition-all placeholder:text-on-surface-muted/10 disabled:opacity-50"
                     />
                     <div className="absolute bottom-0 left-0 w-0 h-px bg-primary group-focus-within:w-full transition-all duration-300" />
                   </div>
@@ -320,8 +453,11 @@ export default function Contact() {
                       id="message"
                       required
                       rows={6}
+                      value={formData.message}
+                      onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+                      disabled={isSubmitting}
                       placeholder="ENTER_MESSAGE_BODY_HERE..."
-                      className="w-full bg-surface-high/50 border-l border-outline/20 p-4 text-sm font-mono focus:border-primary focus:bg-surface-high focus:outline-none transition-all placeholder:text-on-surface-muted/10 resize-none"
+                      className="w-full bg-surface-high/50 border-l border-outline/20 p-4 text-sm font-mono focus:border-primary focus:bg-surface-high focus:outline-none transition-all placeholder:text-on-surface-muted/10 resize-none disabled:opacity-50"
                     />
                     <div className="absolute bottom-0 left-0 w-0 h-px bg-primary group-focus-within:w-full transition-all duration-300" />
                   </div>
@@ -329,17 +465,53 @@ export default function Contact() {
 
                 <div className="flex items-center justify-between pt-4">
                   <div className="hidden sm:flex flex-col gap-0.5 opacity-30 select-none">
-                    <span className="text-[8px] font-mono font-bold text-on-surface-muted tracking-[0.3em] uppercase">SYSTEM_READY</span>
+                    <span className={cn(
+                      "text-[8px] font-mono font-bold tracking-[0.3em] uppercase",
+                      submitStatus === 'SUCCESS' ? "text-secondary" : 
+                      submitStatus === 'ERROR' ? "text-tertiary" : "text-on-surface-muted"
+                    )}>
+                      {submitStatus === 'SUCCESS' ? "TRANSMISSION_SUCCESSFUL" : 
+                       submitStatus === 'ERROR' ? "TRANSMISSION_FAILED" : "SYSTEM_READY"}
+                    </span>
                     <div className="flex gap-1">
-                      {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="w-1.5 h-1.5 bg-primary/40" />)}
+                      {[1, 2, 3, 4, 5, 6].map(i => (
+                        <div 
+                          key={i} 
+                          className={cn(
+                            "w-1.5 h-1.5 transition-colors duration-500",
+                            submitStatus === 'SUCCESS' ? "bg-secondary" : 
+                            submitStatus === 'ERROR' ? "bg-tertiary" : "bg-primary/40"
+                          )} 
+                        />
+                      ))}
                     </div>
                   </div>
-                  <button className="btn-tactical btn-tactical-primary group flex items-center gap-3 px-8 h-12">
+                  <button 
+                    type="submit" 
+                    disabled={isSubmitting}
+                    className="btn-tactical btn-tactical-primary group flex items-center gap-3 px-8 h-12 disabled:opacity-50 relative overflow-hidden"
+                  >
                     <div className="flex flex-col items-start leading-none">
-                      <span className="text-xs font-black uppercase tracking-widest">SEND MESSAGE</span>
-                      <span className="text-[8px] font-mono opacity-50 uppercase tracking-tighter">INIT_UPLINK</span>
+                      <span className="text-xs font-black uppercase tracking-widest">
+                        {isSubmitting ? "TRANSMITTING..." : 
+                         submitStatus === 'SUCCESS' ? "UPLINK_COMPLETE" : 
+                         submitStatus === 'ERROR' ? "RETRY_UPLINK" : "SEND MESSAGE"}
+                      </span>
+                      <span className="text-[8px] font-mono opacity-50 uppercase tracking-tighter">
+                        {isSubmitting ? "DUMPING_PACKETS" : "INIT_UPLINK"}
+                      </span>
                     </div>
-                    <Send size={16} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                    <Send size={16} className={cn(
+                      "transition-transform",
+                      isSubmitting ? "animate-pulse" : "group-hover:translate-x-1 group-hover:-translate-y-1"
+                    )} />
+                    {isSubmitting && (
+                       <motion.div 
+                         className="absolute inset-0 bg-primary/10"
+                         animate={{ x: ["-100%", "100%"] }}
+                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                       />
+                    )}
                   </button>
                 </div>
               </form>
@@ -368,6 +540,14 @@ export default function Contact() {
 
         </div>
       </div>
+
+      <TacticalNotification
+        isOpen={notification.isOpen}
+        onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+      />
 
       <TacticalModal
         isOpen={!!activeModal}

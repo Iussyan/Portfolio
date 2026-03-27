@@ -2,55 +2,61 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowUpRight, Folder, Terminal } from "lucide-react";
 import { TacticalModal } from "@/components/ui/TacticalModal";
 import { fadeUp, stagger, item } from "@/lib/animations";
 import { tacticalAudio } from "@/lib/sounds";
-import { useEffect } from "react";
-
-const projects = [
-  {
-    id: "LOG_01",
-    title: "SEEGLA // FRONTEND",
-    category: "Web Architecture",
-    task: "Spearheading the frontend architecture for our developer collective by building modular, high-performance web interfaces with React and Next.js.",
-    stack: ["NEXT.JS", "REACT", "TYPESCRIPT", "TAILWIND"],
-    link: "https://seegla.ph",
-    status: "PROD_STABLE"
-  },
-  {
-    id: "LOG_02",
-    title: "LUNA // HEALTH-TECH",
-    category: "Mobile Systems",
-    task: "Architecting a specialized health-tech mobile application using Flutter to provide secure and intuitive menstrual health tracking for users.",
-    stack: ["FLUTTER", "DART", "SUPABASE", "NODE.JS"],
-    link: "https://domain-luna.vercel.app",
-    status: "LIVE_STABLE"
-  },
-  {
-    id: "LOG_03",
-    title: "DIGITAL LAB // INDIE",
-    category: "Game Development",
-    task: "Fusing logic and creativity through indie game development using Unity and Aseprite to create interactive and educational media experiences.",
-    stack: ["UNITY", "C#", "ASEPRITE", "DOTNET"],
-    link: "https://github.com/Iussyan",
-    status: "ACTIVE_PROD"
-  },
-];
+import { supabase } from "@/lib/supabase";
 
 export default function Projects() {
+  const [projects, setProjects] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeModal, setActiveModal] = useState<{ title: string; subtitle?: string; content: React.ReactNode } | null>(null);
+  const [archiveDate, setArchiveDate] = useState<string>("AWAITING_SYNC...");
 
-  // Play comms sound on load
+  const fetchProjects = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      if (data) setProjects(data);
+    } catch (err) {
+      console.error("Error fetching projects:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
+    fetchProjects();
+
+    // Subscribe to changes
+    const channel = supabase
+      .channel('public:projects')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => {
+        fetchProjects();
+      })
+      .subscribe();
+
+    const date = new Date();
+    const formattedDate = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+    setArchiveDate(formattedDate);
     tacticalAudio?.comms();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  const openProjectModal = (p: typeof projects[0]) => {
+  const openProjectModal = (p: any) => {
     setActiveModal({
       title: p.title,
-      subtitle: `MISSION_ID: ${p.id} // ${p.category}`,
+      subtitle: `MISSION_ID: ${p.id.split('-')[0]} // ${p.category}`,
       content: (
         <div className="flex flex-col gap-6 font-mono text-base uppercase">
           <div className="border-l-2 border-primary pl-4 py-2 bg-primary/5">
@@ -65,7 +71,7 @@ export default function Projects() {
           <div className="flex flex-col gap-3">
             <h4 className="text-primary font-bold text-xs tracking-widest uppercase">TECHNICAL_STACK</h4>
             <div className="flex flex-wrap gap-2">
-              {p.stack.map(s => (
+              {p.stack.map((s: string) => (
                 <span key={s} className="px-3 py-1 bg-surface-high border border-outline/20 text-xs font-bold text-on-surface-muted">
                   {s}
                 </span>
@@ -96,7 +102,7 @@ export default function Projects() {
             </motion.h1>
           </div>
           <motion.div {...fadeUp(0.2)} className="flex flex-col text-xs font-mono text-on-surface-muted italic">
-            <span>ARCHIVE_ACCESSED: 2024.05.25</span>
+            <span>ARCHIVE_ACCESSED: {archiveDate}</span>
             <span>TOTAL_MODULES: 003_LOADED</span>
           </motion.div>
         </section>
@@ -121,7 +127,7 @@ export default function Projects() {
 
               <div className="flex justify-between items-start">
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs font-mono text-primary/60 tracking-widest">{p.id} {"//"} {p.category}</span>
+                  <span className="text-xs font-mono text-primary/60 tracking-widest">{p.category}</span>
                   <h3 className="text-xl font-bold tracking-tight text-on-surface group-hover:glitch-text" data-text={p.title}>{p.title}</h3>
                 </div>
                 <Folder size={18} className="text-on-surface-muted opacity-20 group-hover:opacity-100 transition-opacity" />
@@ -132,7 +138,7 @@ export default function Projects() {
               </p>
 
               <div className="flex flex-wrap gap-2 pt-2">
-                {p.stack.map(s => (
+                {p.stack.map((s: string) => (
                   <span key={s} className="text-xs font-mono border border-outline/20 px-2 py-0.5 text-on-surface-muted group-hover:border-secondary/40 group-hover:text-secondary transition-colors uppercase">
                     {s}
                   </span>

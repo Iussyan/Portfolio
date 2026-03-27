@@ -10,16 +10,24 @@ class TacticalAudioEngine {
 
   private getContext() {
     if (typeof window === "undefined") return null;
-    if (!this.ctx) {
-      this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
     
-    // Explicitly resume context (required by browsers after the first user gesture)
-    if (this.ctx.state === "suspended") {
-      this.ctx.resume();
+    try {
+      if (!this.ctx) {
+        this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      
+      // Explicitly resume context (required by browsers after the first user gesture)
+      if (this.ctx && this.ctx.state === "suspended") {
+        // Non-blocking resume attempt
+        this.ctx.resume().catch(() => {
+          // Silent catch to prevent blocking if Safari rejects the resume without gesture
+        });
+      }
+      
+      return this.ctx;
+    } catch (e) {
+      return null;
     }
-    
-    return this.ctx;
   }
 
   private playTone(freq: number, type: OscillatorType, duration: number, volume: number) {
@@ -117,6 +125,39 @@ class TacticalAudioEngine {
       this.playTone(1200, "sine", 0.04, 0.08);
       setTimeout(() => this.playTone(1500, "sine", 0.04, 0.08), 50);
     }, 80);
+  }
+
+  // Intense static + tone shift for theme transitions
+  public glitch() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    // 1. Harsh Noise Burst
+    const bufferSize = ctx.sampleRate * 0.4;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.sin(i / 10); // Crinkly noise
+    }
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.12, ctx.currentTime);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
+
+    noise.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+    noise.start();
+
+    // 2. Rapid Tone Jitter
+    const jitterCount = 5;
+    for (let i = 0; i < jitterCount; i++) {
+      setTimeout(() => {
+        this.playTone(100 + Math.random() * 1000, "sawtooth", 0.05, 0.05);
+      }, i * 60);
+    }
   }
 }
 

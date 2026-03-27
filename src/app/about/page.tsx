@@ -1,11 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Shield, Cpu, Zap, Info, Layers } from "lucide-react";
+import { Shield, Cpu, Zap, Info, Layers, RefreshCcw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { TacticalModal } from "@/components/ui/TacticalModal";
 import { fadeUp, item } from "@/lib/animations";
 import { tacticalAudio } from "@/lib/sounds";
+import { useTheme } from "@/components/providers/ThemeProvider";
+import { useMetadata } from "@/lib/useMetadata";
 
 const experiences = [
   { id: "EXP_01", role: "Software Engineer", sector: "SEEGLA (Collective)", period: "2026 — Present", task: "Spearheading the software architecture for our developer collective by building modular, high-performance web and mobile interfaces with React and Next.js." },
@@ -20,12 +22,19 @@ const loadoutItems = [
 ];
 
 export default function About() {
+  const { metadata } = useMetadata();
   const [activeModal, setActiveModal] = useState<{ title: string; subtitle?: string; content: React.ReactNode } | null>(null);
+  const { theme, toggleTheme } = useTheme();
 
   // Play comms sound on load
   useEffect(() => {
     tacticalAudio?.comms();
   }, []);
+
+  const handleThemeToggle = () => {
+    tacticalAudio?.glitch();
+    toggleTheme();
+  };
 
   const openExperienceModal = (exp: typeof experiences[0]) => {
     setActiveModal({
@@ -87,7 +96,7 @@ export default function About() {
     });
   };
 
-  const openEducationModal = (edu: { title: string; org: string; date: string; status: string }) => {
+  const openEducationModal = (edu: { title: string; org: string; date: string; status: string; desc: string }) => {
     setActiveModal({
       title: edu.title,
       subtitle: `${edu.org} // ${edu.date}`,
@@ -99,18 +108,17 @@ export default function About() {
           <div className="flex flex-col gap-4">
             <h4 className="text-primary font-bold text-xs tracking-widest uppercase">ACADEMIC_RECORD_SUMMARY</h4>
             <p className="text-base font-bold text-on-surface leading-snug normal-case font-sans">
-              Currently pursuing deep technical knowledge and professional expertise at {edu.org}.
-              Focusing on software engineering principles and modern system architectures.
+              {edu.desc}
             </p>
           </div>
           <div className="bg-surface-high p-5 border border-outline/10 grid grid-cols-2 gap-4">
             <div>
               <span className="text-on-surface-muted text-[10px] block mb-1">GPA_SYNC</span>
-              <span className="text-primary font-bold">STABLE // HIGH</span>
+              <span className="text-primary font-bold font-mono uppercase tracking-tighter">STABLE // HIGH</span>
             </div>
             <div>
               <span className="text-on-surface-muted text-[10px] block mb-1">CREDITS_VERIFIED</span>
-              <span className="text-primary font-bold">100%_SYNC</span>
+              <span className="text-primary font-bold font-mono uppercase tracking-tighter">100%_SYNC</span>
             </div>
           </div>
         </div>
@@ -127,16 +135,22 @@ export default function About() {
           <div className="hud-marker" />
           <div className="w-40 h-40 bg-surface-high border border-outline relative overflow-hidden shrink-0 group/dossier">
             <img
-              src="/assets/profile/operator.jfif"
+              src="/assets/profile/operator.jpeg"
               alt="Operator Profile"
               className="w-full h-full object-cover grayscale group-hover/dossier:grayscale-0 transition-all duration-500"
             />
             <div className="absolute inset-0 border-[0.5px] border-primary/20 pointer-events-none" />
           </div>
           <div className="flex flex-col gap-4">
-            <motion.div {...fadeUp(0)} className="flex items-center gap-2">
-              <Info size={16} className="text-secondary" />
-              <span className="text-xs tracking-[0.3em] font-mono text-secondary uppercase font-bold">PROFESSIONAL PROFILE</span>
+            <motion.div {...fadeUp(0)} className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Info size={16} className="text-secondary" />
+                <span className="text-xs tracking-[0.2em] font-mono text-secondary uppercase font-bold shrink-0">PROFESSIONAL PROFILE</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-0.5 bg-primary/5 border-l border-primary/20">
+                <div className="w-1 h-1 bg-secondary animate-pulse" />
+                <span className="text-[10px] text-primary/60 font-mono font-bold tracking-tighter uppercase truncate">MISSION: {metadata.CURRENT_MISSION}</span>
+              </div>
             </motion.div>
             <motion.h1 {...fadeUp(0.1)} className="text-4xl sm:text-6xl font-bold tracking-tighter leading-none hover:glitch-text" data-text="SILVANO // ENGINEER">
               SILVANO, JULIUS JR. K.
@@ -146,10 +160,22 @@ export default function About() {
               Bridging React, Flutter, and Game Development to create unique digital experiences.
             </motion.p>
           </div>
-          <div className="ms-auto flex flex-col text-right text-xs font-mono text-primary/40 lg:flex font-bold tracking-widest italic">
-            <span>SYS_AUTH: LEVEL_05</span>
-            <span>UPTIME: 100%_STABLE</span>
-            <span>REGION: ASIA_PH</span>
+          <div className="ms-auto flex flex-col items-end gap-3 text-right">
+            <button
+              onClick={handleThemeToggle}
+              className="flex items-center gap-2 px-3 py-1.5 border border-primary/20 bg-primary/5 hover:bg-primary/20 text-primary transition-all group/toggle"
+              title="SYSTEM_OVERRIDE // TOGGLE_THEME"
+            >
+              <RefreshCcw size={14} className="group-hover/toggle:rotate-180 transition-transform duration-500" />
+              <span className="text-[10px] font-mono font-bold tracking-widest uppercase">
+                {theme === "tactical" ? "OVERRIDE_TACTICAL" : "RESTORE_TACTICAL"}
+              </span>
+            </button>
+            <div className="flex flex-col text-xs font-mono text-primary/40 lg:flex font-bold tracking-widest italic">
+              <span>SYS_AUTH: LEVEL_05</span>
+              <span>UPTIME: {metadata.DATA_INTEGRITY}_STABLE</span>
+              <span>REGION: ASIA_PH</span>
+            </div>
           </div>
         </section>
 
@@ -236,8 +262,20 @@ export default function About() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-outline/5">
             {[
-              { title: "B.S. Information Technology", org: "Quezon City University", date: "2023 — 2027", status: "IN_PROGRESS" },
-              { title: "Senior High School (ICT)", org: "San Francisco High School", date: "2021 — 2023", status: "GRADUATED" },
+              {
+                title: "B.S. Information Technology",
+                org: "Quezon City University",
+                date: "2023 — 2027",
+                status: "IN_PROGRESS",
+                desc: "Currently pursuing deep technical knowledge in Information Technology. Focusing on software engineering principles, system architecture, and modern full-stack development."
+              },
+              {
+                title: "High School // Senior High School (ICT)",
+                org: "San Francisco High School",
+                date: "2016 — 2023",
+                status: "GRADUATED",
+                desc: "Technically specialized in Information and Communications Technology. Developed a strong foundation in logic, basic programming, and digital systems during the graduation phase."
+              },
             ].map((edu) => (
               <div
                 key={edu.title}

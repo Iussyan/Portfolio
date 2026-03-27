@@ -35,7 +35,7 @@ export function Navbar() {
   }, [pathname]);
 
   return (
-    <header className="fixed top-0 w-full z-100 bg-surface/80 backdrop-blur-md border-b border-outline/10 h-14">
+    <header className="fixed top-0 w-full z-1000 bg-surface/80 backdrop-blur-md border-b border-outline/10 h-14">
       <div className="container mx-auto px-4 h-full flex items-center justify-between font-mono">
 
         {/* Logo / System ID */}

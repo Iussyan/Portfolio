@@ -46,10 +46,10 @@ const events = [
     date: "2026.02.20",
     location: "BGC Makati, PH",
     images: [
-      "/assets/expeditions/agent_camp_1.jfif",
-      "/assets/expeditions/agent_camp_2.jfif",
-      "/assets/expeditions/agent_camp_3.jfif",
-      "/assets/expeditions/agent_camp_4.jfif"
+      "/assets/expeditions/agent_camp_1.jpeg",
+      "/assets/expeditions/agent_camp_2.jpeg",
+      "/assets/expeditions/agent_camp_3.jpeg",
+      "/assets/expeditions/agent_camp_4.jpeg"
     ],
     desc: "Intensive training on AI agents and automation. Explored various frameworks for deploying agentic systems in enterprise environments."
   },
@@ -60,10 +60,10 @@ const events = [
     date: "2026.03.21",
     location: "BGC Makati, PH",
     images: [
-      "/assets/expeditions/bwai_gdg_1.jfif",
-      "/assets/expeditions/bwai_gdg_2.jfif",
-      "/assets/expeditions/bwai_gdg_3.jfif",
-      "/assets/expeditions/bwai_gdg_4.jfif"
+      "/assets/expeditions/bwai_gdg_1.jpeg",
+      "/assets/expeditions/bwai_gdg_2.jpeg",
+      "/assets/expeditions/bwai_gdg_3.jpeg",
+      "/assets/expeditions/bwai_gdg_4.jpeg"
     ],
     desc: "Collaborated with Google Developer Group members to explore generative AI capabilities and practical implementations using Gemini and Vertex AI."
   },
@@ -74,12 +74,12 @@ const events = [
     date: "2026.03.06 - 2026.03.08",
     location: "Poblacion Makati, PH // Global Remote",
     images: [
-      "/assets/expeditions/devcamp_2026_1.jfif",
-      "/assets/expeditions/devcamp_2026_2.jfif",
-      "/assets/expeditions/devcamp_2026_3.jfif",
-      "/assets/expeditions/devcamp_2026_4.jfif",
-      "/assets/expeditions/devcamp_2026_5.jfif",
-      "/assets/expeditions/devcamp_2026_6.jfif"
+      "/assets/expeditions/devcamp_2026_1.jpeg",
+      "/assets/expeditions/devcamp_2026_2.jpeg",
+      "/assets/expeditions/devcamp_2026_3.jpeg",
+      "/assets/expeditions/devcamp_2026_4.jpeg",
+      "/assets/expeditions/devcamp_2026_5.jpeg",
+      "/assets/expeditions/devcamp_2026_6.jpeg"
     ],
     desc: "ACHIEVED TOP 15 FINALISTS REPRESENTING SEEGLA // Future-tech hackathon focused on decentralized ecosystems, advanced full-stack architectures, and the evolution of AI-integrated development environments."
   },
@@ -90,10 +90,10 @@ const events = [
     date: "2026.03.17",
     location: "UP Diliman Quezon City, PH",
     images: [
-      "/assets/expeditions/genz_aitoz_1.jfif",
-      "/assets/expeditions/genz_aitoz_2.jfif",
-      "/assets/expeditions/genz_aitoz_3.jfif",
-      "/assets/expeditions/genz_aitoz_4.jfif"
+      "/assets/expeditions/genz_aitoz_1.jpeg",
+      "/assets/expeditions/genz_aitoz_2.jpeg",
+      "/assets/expeditions/genz_aitoz_3.jpeg",
+      "/assets/expeditions/genz_aitoz_4.jpeg"
     ],
     desc: "Exploring the impact of artificial intelligence on the new generation of developers and professionals. Discussed ethical AI and the future of work."
   },
@@ -104,10 +104,10 @@ const events = [
     date: "2025.09.20",
     location: "BGC Makati, PH",
     images: [
-      "/assets/expeditions/software_freedom_day_1.jfif",
-      "/assets/expeditions/software_freedom_day_2.jfif",
-      "/assets/expeditions/software_freedom_day_3.jfif",
-      "/assets/expeditions/software_freedom_day_4.jfif"
+      "/assets/expeditions/software_freedom_day_1.jpeg",
+      "/assets/expeditions/software_freedom_day_2.jpeg",
+      "/assets/expeditions/software_freedom_day_3.jpeg",
+      "/assets/expeditions/software_freedom_day_4.jpeg"
     ],
     desc: "Global celebration of Free and Open Source Software (FOSS). Participated in workshops promoting software freedom and digital sovereignty."
   },
@@ -118,10 +118,10 @@ const events = [
     date: "2025.08.23",
     location: "Quezon City, PH",
     images: [
-      "/assets/expeditions/wordpress_devcon_1.jfif",
-      "/assets/expeditions/wordpress_devcon_2.jfif",
-      "/assets/expeditions/wordpress_devcon_3.jfif",
-      "/assets/expeditions/wordpress_devcon_4.jfif"
+      "/assets/expeditions/wordpress_devcon_1.jpeg",
+      "/assets/expeditions/wordpress_devcon_2.jpeg",
+      "/assets/expeditions/wordpress_devcon_3.jpeg",
+      "/assets/expeditions/wordpress_devcon_4.jpeg"
     ],
     desc: "Deep-dive into WordPress core development, theme architecture, and high-performance hosting solutions for enterprise-grade sites."
   },
@@ -132,10 +132,10 @@ const events = [
     date: "2025.02.21",
     location: "BGC Makati, PH",
     images: [
-      "/assets/expeditions/wordpress_manila_meetup_1.jfif",
-      "/assets/expeditions/wordpress_manila_meetup_2.jfif",
-      "/assets/expeditions/wordpress_manila_meetup_3.jfif",
-      "/assets/expeditions/wordpress_manila_meetup_4.jfif"
+      "/assets/expeditions/wordpress_manila_meetup_1.jpeg",
+      "/assets/expeditions/wordpress_manila_meetup_2.jpeg",
+      "/assets/expeditions/wordpress_manila_meetup_3.jpeg",
+      "/assets/expeditions/wordpress_manila_meetup_4.jpeg"
     ],
     desc: "Monthly gathering of WordPress enthusiasts to share best practices, troubleshooting tips, and the latest news from the global community."
   }
@@ -151,6 +151,7 @@ const getSortDate = (dateStr: string) => {
 export default function Expeditions() {
   const [activeModal, setActiveModal] = useState<{ title: string; subtitle?: string; content: React.ReactNode } | null>(null);
   const [sortOrder, setSortOrder] = useState<'OLDEST_FIRST' | 'LATEST_FIRST'>('OLDEST_FIRST');
+  const [syncDate, setSyncDate] = useState<string | number>("AWAITING_SYNC...");
 
   // Sorted events computation
   const sortedEvents = [...events].sort((a, b) => {
@@ -160,6 +161,9 @@ export default function Expeditions() {
   });
 
   useEffect(() => {
+    const date = new Date();
+    const formattedDate = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+    setSyncDate(formattedDate);
     tacticalAudio?.comms();
   }, []);
 
@@ -219,7 +223,7 @@ export default function Expeditions() {
                 {evt.desc}
               </p>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4 mt-auto">
               <div className="bg-surface-high p-4 border border-outline/10 flex flex-col justify-center">
                 <span className="text-primary/60 text-[10px] font-bold mb-1 uppercase tracking-[0.2em]">PARTICIPATION</span>
@@ -253,7 +257,7 @@ export default function Expeditions() {
             </motion.h1>
           </div>
           <motion.div {...fadeUp(0.2)} className="flex flex-col text-xs font-mono text-on-surface-muted italic">
-            <span>SYNC_DATE: 2024.03.26</span>
+            <span>SYNC_DATE: {syncDate}</span>
             <span>DATA_INTEGRITY: 100%</span>
           </motion.div>
         </section>
