@@ -260,7 +260,7 @@ export default function Contact() {
       </div>
 
       {/* Notification */}
-      <div className="fixed top-20 right-6 z-2002 flex flex-col gap-3 pointer-events-none">
+      <div className="fixed top-20 right-6 z-[9999] flex flex-col gap-3 pointer-events-none">
         <TacticalNotification
           isOpen={notification.isOpen}
           onClose={() => setNotification(p => ({ ...p, isOpen: false }))}

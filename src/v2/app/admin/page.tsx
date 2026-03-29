@@ -1197,7 +1197,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Tactical Notifications Stack */}
-      <div className="fixed top-6 right-6 z-2002 flex flex-col gap-3 pointer-events-none">
+      <div className="fixed top-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none">
         <AnimatePresence>
           {notifications.map((n) => (
             <TacticalNotification
