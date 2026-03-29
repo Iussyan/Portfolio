@@ -71,7 +71,7 @@ export function TacticalNotification({
           exit={{ opacity: 0, x: 40, scale: 0.95 }}
           transition={{ type: "spring", stiffness: 500, damping: 40 }}
           className={cn(
-            "flex items-start gap-3 w-80 rounded-xl border shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden pointer-events-auto",
+            "z-[9999] flex items-start gap-3 w-80 rounded-xl border shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden pointer-events-auto",
             cfg.bg,
             className
           )}

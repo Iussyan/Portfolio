@@ -32,7 +32,7 @@ export function AchievementProvider({ children }: { children: React.ReactNode })
       {children}
       
       {/* Achievement Notifications Stack */}
-      <div className="fixed top-6 right-6 z-3000 flex flex-col gap-3 pointer-events-none">
+      <div className="fixed top-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none">
         <AnimatePresence>
           {notificationQueue.map((a) => (
             <TacticalNotification

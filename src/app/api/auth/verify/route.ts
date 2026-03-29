@@ -11,7 +11,6 @@ export async function POST(req: Request) {
     }
 
     if (passcode === masterPasscode) {
-      // In a real app, we'd set a secure cookie/JWT here
       return NextResponse.json({ success: true });
     }
 

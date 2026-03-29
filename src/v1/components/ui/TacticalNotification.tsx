@@ -73,7 +73,7 @@ export function TacticalNotification({
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
           className={cn(
-            "z-2002 w-80 font-mono border-l-4 shadow-2xl overflow-hidden pointer-events-auto",
+            "z-[9999] w-80 font-mono border-l-4 shadow-2xl overflow-hidden pointer-events-auto",
             config.borderColor,
             config.bgColor,
             "backdrop-blur-md border border-t-outline/10 border-b-outline/10 border-r-outline/10",
