@@ -1,0 +1,98 @@
+﻿diff --git a/src/v1/components/providers/ThemeProvider.tsx b/src/v1/components/providers/ThemeProvider.tsx
+new file mode 100644
+index 0000000..7e0438c
+--- /dev/null
++++ b/src/v1/components/providers/ThemeProvider.tsx
+@@ -0,0 +1,92 @@
++"use client";
++
++import React, { createContext, useContext, useEffect, useState } from "react";
++
++type Theme = "tactical" | "professional";
++
++interface ThemeContextType {
++  theme: Theme;
++  setTheme: (t: Theme) => void;
++  toggleTheme: () => void;
++  isTransitioning: boolean;
++}
++
++const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
++
++export function ThemeProvider({ children }: { children: React.ReactNode }) {
++  const [theme, setThemeState] = useState<Theme>("tactical");
++  const [isTransitioning, setIsTransitioning] = useState(false);
++
++  useEffect(() => {
++    // Check local storage for saved theme on mount
++    const saved = localStorage.getItem("operator-theme");
++    
++    // Map V2 theme names to V1
++    let initialTheme: Theme = "tactical";
++    if (saved === "professional" || saved === "light") {
++      initialTheme = "professional";
++    } else if (saved === "tactical" || saved === "dark") {
++      initialTheme = "tactical";
++    }
++
++    setThemeState(initialTheme);
++    document.documentElement.setAttribute("data-theme", initialTheme === "professional" ? "light" : "dark");
++    
++    if (initialTheme === "professional") {
++      document.documentElement.classList.add("theme-professional");
++      document.documentElement.classList.remove("dark"); 
++      document.documentElement.classList.add("light");
++    } else {
++      document.documentElement.classList.remove("theme-professional");
++      document.documentElement.classList.add("dark");
++      document.documentElement.classList.remove("light");
++    }
++  }, []);
++
++  const setTheme = (newTheme: Theme) => {
++    if (isTransitioning || newTheme === theme) return;
++    
++    // Start transition
++    setIsTransitioning(true);
++    
++    // Switch theme halfway through the glitch animation
++    setTimeout(() => {
++      setThemeState(newTheme);
++      localStorage.setItem("operator-theme", newTheme);
++      document.documentElement.setAttribute("data-theme", newTheme === "professional" ? "light" : "dark");
++      
++      if (newTheme === "professional") {
++        document.documentElement.classList.add("theme-professional");
++        document.documentElement.classList.remove("dark"); 
++        document.documentElement.classList.add("light");
++      } else {
++        document.documentElement.classList.remove("theme-professional");
++        document.documentElement.classList.add("dark");
++        document.documentElement.classList.remove("light");
++      }
++    }, 50); // Snappy delay for immediate feel
++
++    // End transition
++    setTimeout(() => {
++      setIsTransitioning(false);
++    }, 600); // Consistent with V2
++  };
++
++  const toggleTheme = () => {
++    setTheme(theme === "tactical" ? "professional" : "tactical");
++  };
++
++  return (
++    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme, isTransitioning }}>
++      {children}
++    </ThemeContext.Provider>
++  );
++}
++
++export function useTheme() {
++  const context = useContext(ThemeContext);
++  if (context === undefined) {
++    throw new Error("useTheme must be used within a ThemeProvider");
++  }
++  return context;
++}

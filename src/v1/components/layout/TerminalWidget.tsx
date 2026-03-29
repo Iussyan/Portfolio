@@ -40,7 +40,7 @@ export function TerminalWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isHacked, setIsHacked] = useState(false);
-  const { theme, setTheme, toggleTheme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const { version, toggleVersion } = useVersion();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [input, setInput] = useState("");
@@ -141,7 +141,6 @@ export function TerminalWidget() {
           <div className="grid grid-cols-1 gap-1">
             <span className="text-primary font-bold">AVAILABLE_COMMANDS:</span>
             <span className="text-secondary">- WHOAMI: OPERATOR IDENTITY</span>
-            <span className="text-secondary">- THEME: DISPLAY APPEARANCE SETTINGS</span>
             <span className="text-secondary">- LS: DIRECTORY LISTING</span>
             <span className="text-secondary">- ARCHIVES: OPERATIONAL LOGS</span>
             <span className="text-secondary">- EXPEDITIONS: ARCHIVE_METADATA</span>
@@ -163,28 +162,6 @@ export function TerminalWidget() {
             </div>
           </div>
         ));
-        break;
-      case "theme":
-      case "themes":
-        addLog("info", (
-          <div className="flex flex-col gap-2">
-            <span className="text-primary font-bold uppercase tracking-widest">[APPEARANCE_SETTINGS]</span>
-            <div className="grid grid-cols-1 gap-1 px-2 border-l border-primary/20 ml-2">
-              <span className="text-secondary">• tactical     - HUD Default (Dark)</span>
-              <span className="text-secondary">• professional - High-Fidelity (Slate)</span>
-            </div>
-            <span className="text-on-surface-muted italic mt-1 text-[10px]">USAGE: theme set [mode]</span>
-          </div>
-        ));
-        break;
-      case "theme set tactical":
-      case "theme set professional":
-        {
-          const mode = cleanCmd.split(" ").pop() as any;
-          setTheme(mode);
-          addLog("info", `INITIATING_SYSTEM_SHIFT_TO: ${mode.toUpperCase()}`);
-          tacticalAudio?.glitch();
-        }
         break;
       case "fullscreen":
         setIsFullscreen(prev => !prev);
@@ -352,7 +329,7 @@ export function TerminalWidget() {
         addLog("error", `COMMAND_NOT_RECOGNIZED: '${cmd}'. TYPE 'HELP'.`);
         tacticalAudio?.error();
     }
-  }, [addLog, router, theme, setTheme, toggleTheme, toggleVersion, isHacked, isFullscreen, achievements]);
+  }, [addLog, router, theme, toggleTheme, toggleVersion]);
 
   const onKeyDown = async (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
