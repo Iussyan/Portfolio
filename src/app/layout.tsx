@@ -1,27 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
-import { SystemPath } from "@/components/layout/SystemPath";
-import { TerminalWidget } from "@/components/layout/TerminalWidget";
-import { ThemeProvider } from "@/components/providers/ThemeProvider";
-import { AchievementProvider } from "@/components/providers/AchievementProvider";
-import { ThemeTransition } from "@/components/ui/ThemeTransition";
+import { VersionProvider } from "@/providers/VersionProvider";
+import { DispatcherLayout } from "@/components/DispatcherLayout";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
+const jakarta = Plus_Jakarta_Sans({ 
+  subsets: ["latin"], 
+  variable: "--font-jakarta",
+  weight: ["400", "500", "600", "700", "800"]
 });
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-mono",
+const jetbrainsMono = JetBrains_Mono({ 
+  subsets: ["latin"], 
+  variable: "--font-mono" 
 });
 
 export const metadata: Metadata = {
-  title: "OPERATOR_01 // SILVANO, JULIUS JR. K.",
-  description: "Tactical Command Center - Personal Portfolio",
+  title: "Julius Silvano — Software Engineer",
+  description: "Full-Stack Developer · Next.js · Flutter · Java · Building scalable digital solutions.",
 };
 
 export const viewport: Viewport = {
@@ -38,21 +34,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark h-full">
-      <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans min-h-full flex flex-col antialiased bg-surface text-on-surface transition-colors duration-500`}>
-        <ThemeProvider>
-          <AchievementProvider>
-            <ThemeTransition />
-            <div className="fixed inset-0 pointer-events-none z-50 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] blend-soft-light" />
-            <Navbar />
-            <main className="grow pt-14 relative">
-              <SystemPath />
-              {children}
-            </main>
-            <TerminalWidget />
-            <Footer />
-          </AchievementProvider>
-        </ThemeProvider>
+    <html lang="en" className="dark h-full overflow-x-hidden">
+      <body className={`${jakarta.variable} ${jetbrainsMono.variable} font-sans min-h-full flex flex-col antialiased`}>
+        <VersionProvider>
+          <DispatcherLayout>
+            {children}
+          </DispatcherLayout>
+        </VersionProvider>
       </body>
     </html>
   );
